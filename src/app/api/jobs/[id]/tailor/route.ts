@@ -21,7 +21,7 @@ export async function POST(_req: Request, ctx: { params: Promise<{ id: string }>
     const language: CvLang = (CV_LANGS as readonly string[]).includes(guess) ? (guess as CvLang) : "en";
     const res = await tailorApplication(job, profile, language, job.aiEval?.keywords ?? [], settings.writeModel);
 
-    const [row] = await getDb()
+    const [row] = await (await getDb())
       .insert(tailored)
       .values({ jobId: id, language, cv: res.cv, letter: res.letter, corrections: res.corrections, model: settings.writeModel })
       .returning();

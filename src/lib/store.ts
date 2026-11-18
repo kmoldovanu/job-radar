@@ -10,7 +10,7 @@ import {
 const { jobs, profile, settings, applications, tailored, companies } = schema;
 
 export async function getProfile(): Promise<{ profile: Profile; rawText: string; exists: boolean }> {
-  const rows = await getDb().select().from(profile).where(eq(profile.id, 1));
+  const rows = await (await getDb()).select().from(profile).where(eq(profile.id, 1));
   if (!rows[0]) return { profile: emptyProfile(), rawText: "", exists: false };
   const parsed = profileSchema.safeParse(rows[0].data);
   return { profile: parsed.success ? parsed.data : emptyProfile(), rawText: rows[0].rawText, exists: true };
@@ -18,21 +18,21 @@ export async function getProfile(): Promise<{ profile: Profile; rawText: string;
 
 export async function saveProfile(data: Profile, rawText?: string) {
   const values = { id: 1, data, updatedAt: new Date(), ...(rawText !== undefined ? { rawText } : {}) };
-  await getDb()
+  await (await getDb())
     .insert(profile)
     .values({ rawText: "", ...values })
     .onConflictDoUpdate({ target: profile.id, set: values });
 }
 
 export async function getSettings(): Promise<Settings> {
-  const rows = await getDb().select().from(settings).where(eq(settings.id, 1));
+  const rows = await (await getDb()).select().from(settings).where(eq(settings.id, 1));
   if (!rows[0]) return defaultSettings();
   const parsed = settingsSchema.safeParse(rows[0].data);
   return parsed.success ? parsed.data : defaultSettings();
 }
 
 export async function saveSettings(data: Settings) {
-  await getDb()
+  await (await getDb())
     .insert(settings)
     .values({ id: 1, data, updatedAt: new Date() })
     .onConflictDoUpdate({ target: settings.id, set: { data, updatedAt: new Date() } });
@@ -53,7 +53,7 @@ export interface UpsertResult {
  */
 export async function upsertJobs(list: KeptJob[]): Promise<UpsertResult> {
   if (!list.length) return { inserted: 0, updated: 0, skipped: 0 };
-  const db = getDb();
+  const db = await getDb();
   const withKeys = list.map((j) => ({ job: j, key: dedupeKey(j.company, j.title) }));
   // dedup interno al batch
   const uniq = new Map<string, (typeof withKeys)[number]>();
@@ -118,19 +118,19 @@ export async function upsertJobs(list: KeptJob[]): Promise<UpsertResult> {
 }
 
 export async function getJob(id: string) {
-  const rows = await getDb().select().from(jobs).where(eq(jobs.id, id));
+  const rows = await (await getDb()).select().from(jobs).where(eq(jobs.id, id));
   return rows[0] ?? null;
 }
 
 export async function saveEvaluation(id: string, ev: AiEvaluation) {
-  await getDb()
+  await (await getDb())
     .update(jobs)
     .set({ aiEval: ev, aiScore: Math.round(ev.score) })
     .where(eq(jobs.id, id));
 }
 
 export async function latestTailored(jobId: string) {
-  const rows = await getDb()
+  const rows = await (await getDb())
     .select()
     .from(tailored)
     .where(eq(tailored.jobId, jobId))

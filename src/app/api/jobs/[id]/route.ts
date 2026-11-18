@@ -12,7 +12,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     if (!job) return fail("Offerta non trovata", 404);
     const [t, app] = await Promise.all([
       latestTailored(id),
-      getDb().select().from(applications).where(eq(applications.jobId, id)),
+      (await getDb()).select().from(applications).where(eq(applications.jobId, id)),
     ]);
     return ok({ job, tailored: t, application: app[0] ?? null });
   } catch (e) {

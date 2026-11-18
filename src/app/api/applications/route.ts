@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const rows = await getDb()
+    const rows = await (await getDb())
       .select({
         id: applications.id,
         jobId: applications.jobId,

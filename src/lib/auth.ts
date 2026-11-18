@@ -2,6 +2,13 @@
 
 export const SESSION_COOKIE = "jr_session";
 export const SESSION_DAYS = 30;
+/** La sessione demo dura meno: chi guarda la demo non deve restarci dentro per un mese. */
+export const DEMO_SESSION_DAYS = 1;
+/** I token demo iniziano così: la firma usa un contesto diverso, quindi non si può trasformare in un token del proprietario. */
+export const DEMO_PREFIX = "demo.";
+
+/** owner = tu, con la password; demo = un ospite che guarda i dati di esempio. */
+export type SessionKind = "owner" | "demo";
 
 const enc = new TextEncoder();
 
@@ -34,10 +41,23 @@ export async function createSessionToken(secret: string, now = Date.now()): Prom
 }
 
 export async function verifySessionToken(token: string | undefined, secret: string, now = Date.now()): Promise<boolean> {
-  if (!token) return false;
-  const [exp, sig] = token.split(".");
-  if (!exp || !sig || !/^\d+$/.test(exp) || Number(exp) < now) return false;
-  return safeEqual(sig, await hmac(secret, `jobradar:${exp}`));
+  return (await sessionKind(token, secret, now)) === "owner";
+}
+
+export async function createDemoToken(secret: string, now = Date.now()): Promise<string> {
+  const exp = String(now + DEMO_SESSION_DAYS * 86_400_000);
+  return `${DEMO_PREFIX}${exp}.${await hmac(secret, `jobradar-demo:${exp}`)}`;
+}
+
+/** Chi c'è dietro il cookie, con la firma verificata. null = nessuna sessione valida. */
+export async function sessionKind(token: string | undefined, secret: string, now = Date.now()): Promise<SessionKind | null> {
+  if (!token) return null;
+  const demo = token.startsWith(DEMO_PREFIX);
+  const [exp, sig] = (demo ? token.slice(DEMO_PREFIX.length) : token).split(".");
+  if (!exp || !sig || !/^\d+$/.test(exp) || Number(exp) < now) return null;
+  const expected = await hmac(secret, `${demo ? "jobradar-demo" : "jobradar"}:${exp}`);
+  if (!safeEqual(sig, expected)) return null;
+  return demo ? "demo" : "owner";
 }
 
 export async function checkPassword(input: string, expected: string): Promise<boolean> {

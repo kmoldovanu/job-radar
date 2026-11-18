@@ -21,7 +21,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
     const format = url.searchParams.get("format") === "docx" ? "docx" : "pdf";
     const tid = Number(url.searchParams.get("tid"));
     const t = tid
-      ? (await getDb().select().from(tailored).where(eq(tailored.id, tid)))[0]
+      ? (await (await getDb()).select().from(tailored).where(eq(tailored.id, tid)))[0]
       : await latestTailored(id);
     if (!t) return fail("Nessun CV su misura per questa offerta", 404);
     const job = await getJob(t.jobId);

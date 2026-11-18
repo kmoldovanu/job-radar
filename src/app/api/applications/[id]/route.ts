@@ -20,7 +20,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     if (p.notes !== undefined) set.notes = p.notes;
     if (p.followUpDone !== undefined) set.followUpDone = p.followUpDone;
     if (p.followUpAt !== undefined) set.followUpAt = p.followUpAt ? new Date(p.followUpAt) : null;
-    const [row] = await getDb()
+    const [row] = await (await getDb())
       .update(applications)
       .set(set)
       .where(eq(applications.id, Number((await ctx.params).id)))

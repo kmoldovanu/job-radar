@@ -7,7 +7,7 @@ import { jobs } from "@/lib/store";
 export async function POST(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   try {
     const id = decodeURIComponent((await ctx.params).id);
-    await getDb()
+    await (await getDb())
       .update(jobs)
       .set({ status: "new" })
       .where(and(eq(jobs.id, id), eq(jobs.status, "dismissed")));

@@ -10,7 +10,7 @@ const bodySchema = z.object({ ids: z.array(z.string().max(500)).min(1).max(300) 
 export async function POST(req: Request) {
   try {
     const { ids } = bodySchema.parse(await req.json());
-    const res = await getDb()
+    const res = await (await getDb())
       .update(jobs)
       .set({ seenAt: new Date() })
       .where(and(inArray(jobs.id, ids), isNull(jobs.seenAt)))

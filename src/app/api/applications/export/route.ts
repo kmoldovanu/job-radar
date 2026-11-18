@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const rows = await getDb()
+    const rows = await (await getDb())
       .select({ a: applications, j: jobs, lang: tailored.language })
       .from(applications)
       .innerJoin(jobs, eq(jobs.id, applications.jobId))

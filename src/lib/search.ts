@@ -56,7 +56,7 @@ async function fetchFor(task: SearchTask, profile: Profile, settings: Settings):
     }
     case "company": {
       const id = Number(task.param);
-      const [co] = await getDb().select().from(companies).where(eq(companies.id, id));
+      const [co] = await (await getDb()).select().from(companies).where(eq(companies.id, id));
       if (!co) throw new Error("Azienda non trovata");
       if (co.ats === "greenhouse") return greenhouse.fetchJobs(co.token, co.name);
       if (co.ats === "lever") return lever.fetchJobs(co.token, co.name);
@@ -91,7 +91,7 @@ export async function buildTasks(settings: Settings): Promise<SearchTask[]> {
     for (const c of settings.adzunaCountries) tasks.push({ source: "adzuna", param: c, label: `Adzuna ${c.toUpperCase()}` });
   }
   if (settings.sources.companies) {
-    const list = await getDb().select().from(companies);
+    const list = await (await getDb()).select().from(companies);
     for (const co of list) tasks.push({ source: "company", param: String(co.id), label: co.name });
   }
   return tasks;

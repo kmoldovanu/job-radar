@@ -22,7 +22,7 @@ export async function POST(_req: Request, ctx: { params: Promise<{ id: string }>
     await saveEvaluation(id, ev);
     let hidden = false;
     if (settings.autoHideBelow > 0 && ev.score < settings.autoHideBelow) {
-      const res = await getDb()
+      const res = await (await getDb())
         .update(jobs)
         .set({ status: "dismissed" })
         .where(and(eq(jobs.id, id), eq(jobs.status, "new")))

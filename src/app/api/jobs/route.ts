@@ -23,7 +23,7 @@ export async function GET(req: Request) {
     const sortParam = params.get("sort");
     const sort = sortParam === "recent" || sortParam === "quick" ? sortParam : "ai";
 
-    const db = getDb();
+    const db = await getDb();
     const where: Record<View, SQL | undefined> = {
       new: and(eq(jobs.status, "new"), isNull(jobs.seenAt)),
       seen: and(eq(jobs.status, "new"), isNotNull(jobs.seenAt)),

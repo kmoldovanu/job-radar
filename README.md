@@ -2,7 +2,7 @@
 
 Web app personale per cercare lavoro in tutto il mondo (remoto, Europa e oltre), preparare CV e lettere su misura con l'AI e tracciare le candidature. Interfaccia in italiano, pensata per il telefono e installabile come app (PWA).
 
-**Online:** [job-radar-km.vercel.app](https://job-radar-km.vercel.app) (l'accesso è protetto da password: è un'app personale)
+**Prova la demo:** [job-radar-km.vercel.app/demo](https://job-radar-km.vercel.app/demo), senza password, con dati di esempio. L'app vera è personale e protetta da password.
 
 <img src="docs/offerte.webp" alt="Elenco delle offerte sul telefono, con il punteggio AI di compatibilità" width="300">
 
@@ -108,7 +108,8 @@ Va rifatto solo quando aggiorni l'app e c'è una nuova migrazione nella cartella
 | `ADZUNA_APP_ID`, `ADZUNA_APP_KEY` | no | registrazione gratuita su [developer.adzuna.com](https://developer.adzuna.com) |
 | `JOOBLE_API_KEY` | no | gratuita: richiedila su [jooble.org/api/about](https://jooble.org/api/about) |
 | `THEMUSE_API_KEY` | no | facoltativa anche se usi The Muse (funziona senza): alza i limiti, su [themuse.com/developers](https://www.themuse.com/developers/api/v2) |
-| `CRON_SECRET` | no | stringa casuale: abilita la ricerca automatica ogni mattina |
+| `CRON_SECRET` | no | stringa casuale: abilita la ricerca automatica ogni mattina e il reset notturno della demo |
+| `DEMO_DATABASE_URL` | no | un secondo database Postgres solo per l'accesso demo (vedi sotto) |
 
 Lo stato di tutte le variabili (impostata / mancante, mai il valore) è visibile in **Impostazioni**.
 
@@ -121,10 +122,29 @@ Lo stato di tutte le variabili (impostata / mancante, mai il valore) è visibile
 
 **Ricerca automatica (facoltativa)**: `vercel.json` programma `/api/cron/search` ogni giorno alle 06:00 UTC. Vercel invia `Authorization: Bearer $CRON_SECRET`; senza `CRON_SECRET` la route risponde 503. Il cron fa solo ricerca + filtri (niente AI); la valutazione AI parte quando apri l'app e premi *Valuta con AI*.
 
+## Accesso demo
+
+Chi apre `/demo` (o preme *Apri la demo* nella pagina di login) entra senza password e vede dati di esempio: una persona e delle aziende inventate, offerte con punteggio AI, CV pronti e tre candidature in stati diversi.
+
+- **I tuoi dati restano separati**: la demo usa un altro database (`DEMO_DATABASE_URL`). La sessione demo ha una firma diversa dalla tua, quindi non può diventare un accesso al tuo database.
+- **Cosa si può fare**: guardare tutto, segnare offerte come viste, scartarle, ripristinarle, candidarsi, cambiare lo stato e le note delle candidature, scaricare CV e lettere già pronti.
+- **Cosa è bloccato** (risposta 403 con un messaggio chiaro): ricerca sulle fonti, valutazione e CV con l'AI, caricamento del CV, profilo, impostazioni e pagine carriere. Nessuna chiamata costa nulla.
+- **Reset**: al primo ingresso il database demo viene riempito da solo. Ogni notte alle 03:00 UTC il cron `/api/cron/demo-reset` (protetto da `CRON_SECRET`) lo riporta allo stato iniziale.
+- Se sei già entrato con la password, `/demo` ti lascia sui tuoi dati.
+
+Per attivarla:
+
+1. Crea un secondo database: su Neon basta *Databases → New database* nello stesso progetto, oppure un progetto nuovo.
+2. Crea le tabelle puntando a quel database:
+   ```bash
+   DATABASE_URL="<url del database demo>" npm run db:migrate
+   ```
+3. Su Vercel aggiungi `DEMO_DATABASE_URL` con quell'URL e rifai il deploy.
+
 ## Note tecniche
 
 - **Next.js 16** (App Router) + TypeScript + Tailwind 4, Postgres con Drizzle ORM, `@anthropic-ai/sdk`, PDF con `@react-pdf/renderer`, Word con `docx`, lettura CV con `unpdf` e `mammoth`, validazione con zod.
-- **Login**: `src/proxy.ts` (in Next.js 16 il "middleware" si chiama *proxy*) blocca pagine e API senza un cookie di sessione valido, firmato HMAC e `httpOnly`, valido 30 giorni.
+- **Login**: `src/proxy.ts` (in Next.js 16 il "middleware" si chiama *proxy*) blocca pagine e API senza un cookie di sessione valido, firmato HMAC e `httpOnly`, valido 30 giorni (1 giorno per la demo). Per le sessioni demo applica anche l'elenco delle azioni permesse (`src/lib/demo.ts`), e `getDb()` sceglie il database in base alla sessione.
 - **Vincolo serverless**: nessuna API fa lavori lunghi. Ogni chiamata gestisce una fonte (o un paese Adzuna, o un'azienda) oppure una offerta. Le operazioni in blocco (ricerca, valutazione, "Prepara N candidature") le orchestra il browser con una coda di 3-4 richieste in parallelo e una barra di avanzamento. Se una fonte fallisce le altre continuano.
 - **Mai sovrascrivere**: una nuova ricerca non ripropone né modifica offerte a cui ti sei candidato o che hai scartato. Lo stesso annuncio trovato su più fonti viene salvato una volta sola (chiave azienda + titolo).
 - Ogni fonte è un modulo in `src/lib/sources/` con una funzione `parse()` pura e testata; tutto viene normalizzato nel tipo `Job` (`src/lib/types.ts`).

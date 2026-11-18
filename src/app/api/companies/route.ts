@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    return ok({ companies: await getDb().select().from(companies).orderBy(asc(companies.name)) });
+    return ok({ companies: await (await getDb()).select().from(companies).orderBy(asc(companies.name)) });
   } catch (e) {
     return toErrorResponse(e);
   }
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
       return fail("Non riconosco la board: incolla un link boards.greenhouse.io/…, jobs.lever.co/… o jobs.ashbyhq.com/…");
     }
     const name = body.name || prettyName(ref.token);
-    const [row] = await getDb()
+    const [row] = await (await getDb())
       .insert(companies)
       .values({ ats: ref.ats, token: ref.token, name, url })
       .onConflictDoUpdate({ target: [companies.ats, companies.token], set: { name, url } })
