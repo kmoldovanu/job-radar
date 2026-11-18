@@ -110,6 +110,7 @@ Va rifatto solo quando aggiorni l'app e c'è una nuova migrazione nella cartella
 | `THEMUSE_API_KEY` | no | facoltativa anche se usi The Muse (funziona senza): alza i limiti, su [themuse.com/developers](https://www.themuse.com/developers/api/v2) |
 | `CRON_SECRET` | no | stringa casuale: abilita la ricerca automatica ogni mattina e il reset notturno della demo |
 | `DEMO_DATABASE_URL` | no | un secondo database Postgres solo per l'accesso demo (vedi sotto) |
+| `DEMO_PASSWORD` | no | password della demo mostrata nella pagina di login (predefinita: `demo`) |
 
 Lo stato di tutte le variabili (impostata / mancante, mai il valore) è visibile in **Impostazioni**.
 
@@ -124,7 +125,7 @@ Lo stato di tutte le variabili (impostata / mancante, mai il valore) è visibile
 
 ## Accesso demo
 
-Chi apre `/demo` (o preme *Apri la demo* nella pagina di login) entra senza password e vede dati di esempio: una persona e delle aziende inventate, offerte con punteggio AI, CV pronti e tre candidature in stati diversi.
+Chi apre `/demo`, preme *Entra nella demo* o inserisce la password `demo` nella pagina di login entra e vede dati di esempio: una persona e delle aziende inventate, offerte con punteggio AI, CV pronti e tre candidature in stati diversi.
 
 - **I tuoi dati restano separati**: la demo usa un altro database (`DEMO_DATABASE_URL`). La sessione demo ha una firma diversa dalla tua, quindi non può diventare un accesso al tuo database.
 - **Cosa si può fare**: guardare tutto, segnare offerte come viste, scartarle, ripristinarle, candidarsi, cambiare lo stato e le note delle candidature, scaricare CV e lettere già pronti.

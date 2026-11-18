@@ -12,6 +12,11 @@ export function demoEnabled(): boolean {
   return Boolean(process.env.DEMO_DATABASE_URL);
 }
 
+/** Password pubblica della demo, scritta nella pagina di login. Si cambia con DEMO_PASSWORD. */
+export function demoPassword(): string {
+  return process.env.DEMO_PASSWORD?.trim() || "demo";
+}
+
 /** Scritture permesse a un ospite (metodo + percorso). */
 const DEMO_WRITES: [string, RegExp][] = [
   ["POST", /^\/api\/auth\/logout$/],
