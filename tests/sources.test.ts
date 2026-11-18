@@ -70,7 +70,7 @@ describe("Himalayas", () => {
 });
 
 describe("Remote OK", () => {
-  it("salta l'avviso legale iniziale e linka Remote OK", () => {
+  it("salta l'avviso legale iniziale e usa il link diretto di candidatura", () => {
     const jobs = remoteok.parse([
       { legal: "API Terms of Service..." },
       {
@@ -86,7 +86,8 @@ describe("Remote OK", () => {
       },
     ]);
     expect(jobs).toHaveLength(1);
-    expect(jobs[0].url).toBe("https://remoteok.com/remote-jobs/123");
+    expect(jobs[0].url).toBe("https://foo.com/apply");
+    expect(jobs[0].sourceUrl).toBe("https://remoteok.com/remote-jobs/123");
     expect(jobs[0].company).toBe("Foo");
     expect(jobs[0].locationRestrictions).toEqual(["Worldwide"]);
     expect(jobs[0].tags).toEqual(["python"]);
@@ -231,5 +232,21 @@ describe("annuncio manuale", () => {
     expect(j.id).toBe("manual:https://www.linkedin.com/jobs/view/123");
     expect(j.workMode).toBe("remote");
     expect(() => manual.manualJobSchema.parse({ title: "x", company: "", url: "nope", description: "" })).toThrow();
+  });
+});
+
+describe("Remote OK senza apply_url", () => {
+  it("ripiega sul link Remote OK", () => {
+    const [j] = remoteok.parse([{ legal: "x" }, { id: "9", position: "Dev", company: "Foo", url: "https://remoteok.com/remote-jobs/9", apply_url: "" }]);
+    expect(j.url).toBe("https://remoteok.com/remote-jobs/9");
+  });
+});
+
+describe("ricerca sul sito dell'azienda", () => {
+  it("compila la query Google", async () => {
+    const { companySearchUrl } = await import("@/lib/client");
+    expect(companySearchUrl("Acme GmbH", "Data Analyst")).toBe(
+      "https://www.google.com/search?q=%22Acme%20GmbH%22%20Data%20Analyst%20careers",
+    );
   });
 });

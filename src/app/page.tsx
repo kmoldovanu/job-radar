@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Empty, ErrorBox, Progress, ScoreBadge, ViaSource } from "@/components/ui";
-import { api, daysAgo } from "@/lib/client";
+import { api, companySearchUrl, daysAgo } from "@/lib/client";
 import { runQueue } from "@/lib/queue";
 import type { AiEvaluation, MatchDetails, TailoredCv } from "@/lib/types";
 
@@ -250,6 +250,15 @@ function JobCard({ job, onRemove, onChange }: { job: JobRow; onRemove: (id: stri
       <div className="flex flex-wrap gap-2">
         <a href={job.url} target="_blank" rel="noopener noreferrer" className="btn-secondary">
           ↗ Apri annuncio
+        </a>
+        <a
+          href={companySearchUrl(job.company, job.title)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-secondary"
+          title="Cerca lo stesso annuncio sulla pagina careers dell'azienda"
+        >
+          🔍 Sito dell&apos;azienda
         </a>
         {job.hasTailored || t ? (
           <>

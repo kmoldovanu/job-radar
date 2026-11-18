@@ -25,3 +25,9 @@ export function daysAgo(d: string | Date | null | undefined): string {
   const n = Math.floor((Date.now() - new Date(d).getTime()) / 86_400_000);
   return n <= 0 ? "oggi" : n === 1 ? "ieri" : `${n} giorni fa`;
 }
+
+/** Ricerca Google già compilata per trovare l'annuncio sul sito dell'azienda. */
+export function companySearchUrl(company: string, title: string): string {
+  const q = `"${company}" ${title} careers`;
+  return `https://www.google.com/search?q=${encodeURIComponent(q)}`;
+}

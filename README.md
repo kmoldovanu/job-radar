@@ -14,14 +14,14 @@ Web app personale per cercare lavoro in tutto il mondo (remoto, Europa e oltre),
 | Fonte | Cosa copre |
 |---|---|
 | [Himalayas](https://himalayas.app) | lavori remoti, con restrizioni di località e fuso orario |
-| [Remote OK](https://remoteok.com) | lavori remoti (il link rimanda sempre a Remote OK, come chiedono) |
+| [Remote OK](https://remoteok.com) | lavori remoti. "Apri annuncio" porta al link di candidatura dell'azienda, quando Remote OK lo fornisce (le offerte nuove su Remote OK possono essere riservate agli abbonati Premium); "via Remote OK" porta al loro annuncio |
 | [Jobicy](https://jobicy.com) | lavori remoti |
 | [Arbeitnow](https://www.arbeitnow.com) | Europa (soprattutto Germania), con info sul visto |
 | [Adzuna](https://www.adzuna.com) | annunci per paese (gb us de fr it nl es at be ch pl ca au nz sg in mx br za) |
 | Pagine carriere | Greenhouse, Lever, Ashby: incolli il link della pagina careers dell'azienda |
 | A mano | incolli un annuncio trovato su LinkedIn/Indeed: viene valutato e tracciato come gli altri |
 
-Ogni offerta mostra sempre "via *fonte*" con il link.
+Ogni offerta mostra sempre "via *fonte*" con il link. Il pulsante **🔍 Sito dell'azienda** apre una ricerca Google già compilata per trovare lo stesso annuncio sulla pagina careers dell'azienda, dove di solito ci si candida gratis e senza intermediari.
 
 ### Filtri
 
