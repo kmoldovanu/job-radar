@@ -250,3 +250,77 @@ describe("ricerca sul sito dell'azienda", () => {
     );
   });
 });
+
+import * as jooble from "@/lib/sources/jooble";
+import * as themuse from "@/lib/sources/themuse";
+
+describe("Jooble", () => {
+  it("normalizza i campi e pulisce l'HTML dello snippet", () => {
+    const jobs = jooble.parse({
+      totalCount: 2,
+      jobs: [
+        {
+          title: "<b>Data Analyst</b>",
+          location: "Milano, Lombardia",
+          snippet: "&nbsp;...cerchiamo un <b>data analyst</b> con SQL...",
+          salary: "35.000 €",
+          source: "example.it",
+          type: "Full-time",
+          link: "https://jooble.org/desc/123",
+          company: "Acme Srl",
+          updated: "2026-11-10T08:00:00.0000000",
+          id: 123,
+        },
+        { title: "Senza link" },
+      ],
+    });
+    expect(jobs).toHaveLength(1);
+    const [j] = jobs;
+    expect(j.id).toBe("jooble:123");
+    expect(j.title).toBe("Data Analyst");
+    expect(j.description).toContain("data analyst con SQL");
+    expect(j.locationRestrictions).toEqual(["Milano, Lombardia"]);
+    expect(j.postedAt?.getUTCFullYear()).toBe(2026);
+    expect(j.salary).toBe("35.000 €");
+    expect(jooble.parse({ error: "x" })).toEqual([]);
+  });
+});
+
+describe("The Muse", () => {
+  const data = {
+    page: 0,
+    page_count: 10,
+    results: [
+      {
+        id: 42,
+        name: "Data Analyst",
+        contents: "<p>Analyze data with SQL</p>",
+        publication_date: "2026-11-15T10:00:00Z",
+        locations: [{ name: "Berlin, Germany" }, { name: "Flexible / Remote" }],
+        levels: [{ name: "Mid Level", short_name: "mid" }],
+        categories: [{ name: "Data and Analytics" }],
+        company: { id: 1, name: "Acme", short_name: "acme" },
+        refs: { landing_page: "https://www.themuse.com/jobs/acme/data-analyst" },
+      },
+      { id: 43, name: "Senza link", refs: {} },
+    ],
+  };
+  it("normalizza i campi", () => {
+    const jobs = themuse.parse(data);
+    expect(jobs).toHaveLength(1);
+    const [j] = jobs;
+    expect(j.url).toBe("https://www.themuse.com/jobs/acme/data-analyst");
+    expect(j.workMode).toBe("remote");
+    expect(j.locationRestrictions).toEqual(["Berlin, Germany"]);
+    expect(j.company).toBe("Acme");
+    expect(j.tags).toEqual(["Data and Analytics", "Mid Level"]);
+    expect(j.description).toBe("Analyze data with SQL");
+  });
+  it("costruisce l'URL con località e livelli ripetuti", () => {
+    const u = new URL(themuse.buildUrl(1, "mid", "k"));
+    expect(u.searchParams.get("page")).toBe("1");
+    expect(u.searchParams.getAll("location")).toContain("Milan, Italy");
+    expect(u.searchParams.getAll("level")).toEqual(["Mid Level", "Senior Level"]);
+    expect(u.searchParams.get("api_key")).toBe("k");
+  });
+});

@@ -8,12 +8,14 @@ import * as ashby from "./sources/ashby";
 import * as greenhouse from "./sources/greenhouse";
 import * as himalayas from "./sources/himalayas";
 import * as jobicy from "./sources/jobicy";
+import * as jooble from "./sources/jooble";
+import * as themuse from "./sources/themuse";
 import * as lever from "./sources/lever";
 import * as remoteok from "./sources/remoteok";
 import { companies, upsertJobs } from "./store";
 import type { Job, Profile, RejectReason, Settings } from "./types";
 
-export const SEARCHABLE = ["himalayas", "remoteok", "jobicy", "arbeitnow", "adzuna", "company"] as const;
+export const SEARCHABLE = ["himalayas", "remoteok", "jobicy", "jooble", "themuse", "arbeitnow", "adzuna", "company"] as const;
 export type SearchSource = (typeof SEARCHABLE)[number];
 
 export interface SearchTask {
@@ -41,6 +43,10 @@ async function fetchFor(task: SearchTask, profile: Profile, settings: Settings):
       return remoteok.fetchJobs();
     case "jobicy":
       return jobicy.fetchJobs(queries);
+    case "jooble":
+      return jooble.fetchJobs((task.param ?? "").slice(0, 100), queries);
+    case "themuse":
+      return themuse.fetchJobs(profile.preferences.seniority);
     case "arbeitnow":
       return arbeitnow.fetchJobs();
     case "adzuna": {
@@ -74,6 +80,12 @@ export async function buildTasks(settings: Settings): Promise<SearchTask[]> {
   if (settings.sources.himalayas) tasks.push({ source: "himalayas", label: "Himalayas" });
   if (settings.sources.remoteok) tasks.push({ source: "remoteok", label: "Remote OK" });
   if (settings.sources.jobicy) tasks.push({ source: "jobicy", label: "Jobicy" });
+  if (settings.sources.themuse) tasks.push({ source: "themuse", label: "The Muse" });
+  if (settings.sources.jooble && process.env.JOOBLE_API_KEY) {
+    for (const loc of settings.joobleLocations.map((l) => l.trim()).filter(Boolean).slice(0, 8)) {
+      tasks.push({ source: "jooble", param: loc, label: `Jooble ${loc}` });
+    }
+  }
   if (settings.sources.arbeitnow) tasks.push({ source: "arbeitnow", label: "Arbeitnow" });
   if (settings.sources.adzuna && process.env.ADZUNA_APP_ID && process.env.ADZUNA_APP_KEY) {
     for (const c of settings.adzunaCountries) tasks.push({ source: "adzuna", param: c, label: `Adzuna ${c.toUpperCase()}` });

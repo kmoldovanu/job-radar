@@ -16,6 +16,8 @@ const SOURCES: [keyof Settings["sources"], string, string][] = [
   ["himalayas", "Himalayas", "lavori remoti"],
   ["remoteok", "Remote OK", "lavori remoti"],
   ["jobicy", "Jobicy", "lavori remoti"],
+  ["jooble", "Jooble", "aggregatore mondiale (serve chiave gratuita)"],
+  ["themuse", "The Muse", "aziende internazionali, remoto ed Europa"],
   ["arbeitnow", "Arbeitnow", "Europa, con info sul visto"],
   ["adzuna", "Adzuna", "annunci per paese (serve chiave gratuita)"],
   ["companies", "Pagine carriere", "aziende aggiunte in Cerca"],
@@ -28,6 +30,8 @@ const ENV_HELP: Record<string, string> = {
   ANTHROPIC_API_KEY: "AI: valutazioni e CV su misura (facoltativa)",
   ADZUNA_APP_ID: "Fonte Adzuna (facoltativa)",
   ADZUNA_APP_KEY: "Fonte Adzuna (facoltativa)",
+  JOOBLE_API_KEY: "Fonte Jooble (facoltativa)",
+  THEMUSE_API_KEY: "The Muse: limiti più alti (facoltativa, funziona anche senza)",
   CRON_SECRET: "Ricerca automatica ogni mattina (facoltativa)",
 };
 
@@ -103,6 +107,15 @@ export default function SettingsPage() {
         </div>
       </section>
 
+      <section className="card space-y-2">
+        <h2 className="font-semibold">Località Jooble</h2>
+        <p className="text-xs text-slate-500">
+          Una richiesta per località a ogni ricerca, con il primo ruolo del profilo. La chiave gratuita di Jooble ha un numero
+          limitato di richieste: meglio poche località (es. Remote, Italy, Germany).
+        </p>
+        <JoobleLocations value={s.joobleLocations} onChange={(v) => setS({ ...s, joobleLocations: v })} />
+      </section>
+
       <section className="card grid grid-cols-2 gap-3">
         <h2 className="col-span-2 font-semibold">Soglie</h2>
         <NumField label="Età massima annunci (giorni)" value={s.maxAgeDays} onChange={num("maxAgeDays")} />
@@ -158,5 +171,25 @@ function NumField({ label, value, onChange }: { label: string; value: number; on
       <span className="label">{label}</span>
       <input type="number" className="input" value={value} onChange={onChange} />
     </label>
+  );
+}
+
+function JoobleLocations({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
+  const [text, setText] = useState(value.join(", "));
+  return (
+    <input
+      className="input"
+      value={text}
+      placeholder="Remote, Italy, Germany"
+      onChange={(e) => setText(e.target.value)}
+      onBlur={() =>
+        onChange(
+          text
+            .split(",")
+            .map((x) => x.trim())
+            .filter(Boolean),
+        )
+      }
+    />
   );
 }

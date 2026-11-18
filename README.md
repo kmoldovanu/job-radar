@@ -16,6 +16,8 @@ Web app personale per cercare lavoro in tutto il mondo (remoto, Europa e oltre),
 | [Himalayas](https://himalayas.app) | lavori remoti, con restrizioni di località e fuso orario |
 | [Remote OK](https://remoteok.com) | lavori remoti. "Apri annuncio" porta al link di candidatura dell'azienda, quando Remote OK lo fornisce (le offerte nuove su Remote OK possono essere riservate agli abbonati Premium); "via Remote OK" porta al loro annuncio |
 | [Jobicy](https://jobicy.com) | lavori remoti |
+| [Jooble](https://jooble.org) | aggregatore mondiale; una richiesta per località scelta in Impostazioni (serve chiave gratuita; restituisce solo un estratto dell'annuncio) |
+| [The Muse](https://www.themuse.com) | aziende internazionali, remoto e principali città europee, filtrate per livello di seniority |
 | [Arbeitnow](https://www.arbeitnow.com) | Europa (soprattutto Germania), con info sul visto |
 | [Adzuna](https://www.adzuna.com) | annunci per paese (gb us de fr it nl es at be ch pl ca au nz sg in mx br za) |
 | Pagine carriere | Greenhouse, Lever, Ashby: incolli il link della pagina careers dell'azienda |
@@ -88,6 +90,8 @@ Va rifatto solo quando aggiorni l'app e c'è una nuova migrazione nella cartella
 | `SESSION_SECRET` | sì | stringa casuale di almeno 32 caratteri: `openssl rand -hex 32` |
 | `ANTHROPIC_API_KEY` | no | [console.anthropic.com](https://console.anthropic.com) → *API Keys* (servono crediti) |
 | `ADZUNA_APP_ID`, `ADZUNA_APP_KEY` | no | registrazione gratuita su [developer.adzuna.com](https://developer.adzuna.com) |
+| `JOOBLE_API_KEY` | no | gratuita: richiedila su [jooble.org/api/about](https://jooble.org/api/about) |
+| `THEMUSE_API_KEY` | no | facoltativa anche se usi The Muse (funziona senza): alza i limiti, su [themuse.com/developers](https://www.themuse.com/developers/api/v2) |
 | `CRON_SECRET` | no | stringa casuale: abilita la ricerca automatica ogni mattina |
 
 Lo stato di tutte le variabili (impostata / mancante, mai il valore) è visibile in **Impostazioni**.
@@ -95,7 +99,7 @@ Lo stato di tutte le variabili (impostata / mancante, mai il valore) è visibile
 ## Deploy su Vercel
 
 1. Importa il repository su [vercel.com/new](https://vercel.com/new) (framework: Next.js, nessuna modifica ai comandi).
-2. In *Settings → Environment Variables* aggiungi: `DATABASE_URL`, `APP_PASSWORD`, `SESSION_SECRET` e, se le usi, `ANTHROPIC_API_KEY`, `ADZUNA_APP_ID`, `ADZUNA_APP_KEY`, `CRON_SECRET`.
+2. In *Settings → Environment Variables* aggiungi: `DATABASE_URL`, `APP_PASSWORD`, `SESSION_SECRET` e, se le usi, `ANTHROPIC_API_KEY`, `ADZUNA_APP_ID`, `ADZUNA_APP_KEY`, `JOOBLE_API_KEY`, `THEMUSE_API_KEY`, `CRON_SECRET`.
 3. Esegui `npm run db:migrate` dal tuo computer puntando allo stesso database.
 4. Deploy. Apri l'app dal telefono e usa "Aggiungi a schermata Home" per installarla.
 

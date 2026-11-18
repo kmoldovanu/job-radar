@@ -8,6 +8,8 @@ export type SourceId =
   | "himalayas"
   | "remoteok"
   | "jobicy"
+  | "jooble"
+  | "themuse"
   | "arbeitnow"
   | "adzuna"
   | "greenhouse"
@@ -48,6 +50,8 @@ export const SOURCE_LABELS: Record<SourceId, { name: string; home: string }> = {
   himalayas: { name: "Himalayas", home: "https://himalayas.app" },
   remoteok: { name: "Remote OK", home: "https://remoteok.com" },
   jobicy: { name: "Jobicy", home: "https://jobicy.com" },
+  jooble: { name: "Jooble", home: "https://jooble.org" },
+  themuse: { name: "The Muse", home: "https://www.themuse.com" },
   arbeitnow: { name: "Arbeitnow", home: "https://www.arbeitnow.com" },
   adzuna: { name: "Adzuna", home: "https://www.adzuna.com" },
   greenhouse: { name: "Greenhouse", home: "https://www.greenhouse.com" },
@@ -227,12 +231,16 @@ export const settingsSchema = z.object({
       himalayas: z.boolean().default(true),
       remoteok: z.boolean().default(true),
       jobicy: z.boolean().default(true),
+      jooble: z.boolean().default(true),
+      themuse: z.boolean().default(true),
       arbeitnow: z.boolean().default(true),
       adzuna: z.boolean().default(true),
       companies: z.boolean().default(true),
     })
-    .default({ himalayas: true, remoteok: true, jobicy: true, arbeitnow: true, adzuna: true, companies: true }),
+    .default({ himalayas: true, remoteok: true, jobicy: true, jooble: true, themuse: true, arbeitnow: true, adzuna: true, companies: true }),
   adzunaCountries: z.array(z.enum(ADZUNA_COUNTRIES)).default(["de", "nl", "fr", "es", "at", "be", "ch", "gb", "it"]),
+  /** una richiesta Jooble per località a ogni ricerca (la chiave gratuita ha richieste limitate) */
+  joobleLocations: z.array(z.string()).default(["Remote", "Italy", "Germany", "Netherlands"]),
   maxAgeDays: z.number().int().min(1).max(90).default(21),
   minQuickScore: z.number().int().min(0).max(100).default(25),
   aiEvaluateTop: z.number().int().min(0).max(100).default(40),

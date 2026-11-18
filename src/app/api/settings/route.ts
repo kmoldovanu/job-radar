@@ -11,6 +11,8 @@ function envStatus() {
     ANTHROPIC_API_KEY: !!process.env.ANTHROPIC_API_KEY,
     ADZUNA_APP_ID: !!process.env.ADZUNA_APP_ID,
     ADZUNA_APP_KEY: !!process.env.ADZUNA_APP_KEY,
+    JOOBLE_API_KEY: !!process.env.JOOBLE_API_KEY,
+    THEMUSE_API_KEY: !!process.env.THEMUSE_API_KEY,
     APP_PASSWORD: !!process.env.APP_PASSWORD,
     SESSION_SECRET: s.length >= 16,
     CRON_SECRET: !!process.env.CRON_SECRET,
