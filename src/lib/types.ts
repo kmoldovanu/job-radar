@@ -246,6 +246,8 @@ export const settingsSchema = z.object({
   aiEvaluateTop: z.number().int().min(0).max(100).default(40),
   /** valutazione AI dopo ogni ricerca: off = solo punteggio rapido, top = le migliori N, all = tutte le nuove (max 100) */
   autoEvaluate: z.enum(["off", "top", "all"]).default("top"),
+  /** punteggio AI sotto questa soglia → l'offerta va subito tra le scartate (0 = mai) */
+  autoHideBelow: z.number().int().min(0).max(100).default(20),
   prepareCount: z.number().int().min(1).max(30).default(5),
   followUpDays: z.number().int().min(1).max(60).default(10),
   evalModel: z.string().default("claude-haiku-5-5"),

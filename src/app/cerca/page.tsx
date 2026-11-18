@@ -127,11 +127,16 @@ export default function SearchPage() {
       else if (ids.length) {
         setProgress({ label: "Valutazione AI", done: 0, total: ids.length });
         let failed = 0;
-        await runQueue(ids, 4, (id) => api(`/api/jobs/${encodeURIComponent(id)}/evaluate`, { method: "POST" }), (done, total, r) => {
+        let hidden = 0;
+        await runQueue(ids, 4, (id) => api<{ hidden?: boolean }>(`/api/jobs/${encodeURIComponent(id)}/evaluate`, { method: "POST" }), (done, total, r) => {
           if (r.status === "rejected") failed++;
+          else if (r.value.hidden) hidden++;
           setProgress({ label: "Valutazione AI", done, total });
         });
-        setEvalInfo(`Valutate con l'AI ${ids.length - failed} offerte${failed ? ` (${failed} errori)` : ""}.`);
+        setEvalInfo(
+          `Valutate con l'AI ${ids.length - failed} offerte${failed ? ` (${failed} errori)` : ""}.` +
+            (hidden ? ` ${hidden} con punteggio AI sotto ${settings?.autoHideBelow ?? 20} sono andate tra le Scartate.` : ""),
+        );
       } else setEvalInfo("Nessuna offerta nuova da valutare con l'AI.");
     } catch (e) {
       setError((e as Error).message);

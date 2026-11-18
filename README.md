@@ -35,6 +35,7 @@ Ogni offerta mostra sempre "via *fonte*" con il link. Il pulsante **🔍 Sito de
 
 ### AI (Claude)
 
+- **Offerte con punteggio AI sotto 20** (soglia in Impostazioni, 0 = mai) vanno subito tra le *Scartate*: le ricerche non le ripropongono più, ma puoi ripristinarle.
 - **Valutazione** con il modello veloce (default `claude-haiku-5-5`): recruiter severo, una chiamata per offerta, JSON validato con zod (punteggio, chance, sintesi, punti di forza, cosa manca, ostacoli, lingua della candidatura, parole chiave).
 - **CV + lettera su misura** con il modello di scrittura (default `claude-sonnet-5-5`) nella lingua dell'annuncio. L'AI può solo selezionare, riordinare, riformulare e tradurre dal CV master. Dopo la generazione un **controllo in codice** toglie aziende e formazione assenti dal master, forza le date del master, toglie competenze/certificazioni/lingue che non hai e i punti elenco con numeri o metriche che non compaiono nel master. Le correzioni fatte vengono mostrate.
 - Con `claude-sonnet-5-5` (e Opus/Fable) è attivo il *fallback lato server* di Anthropic: se il modello rifiuta una richiesta per un falso positivo dei filtri di sicurezza, la stessa richiesta viene ripetuta automaticamente su un altro modello.

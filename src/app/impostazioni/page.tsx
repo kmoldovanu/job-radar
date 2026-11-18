@@ -121,6 +121,7 @@ export default function SettingsPage() {
         <NumField label="Età massima annunci (giorni)" value={s.maxAgeDays} onChange={num("maxAgeDays")} />
         <NumField label="Match rapido minimo (0-100)" value={s.minQuickScore} onChange={num("minQuickScore")} />
         <NumField label="Offerte da valutare con AI" value={s.aiEvaluateTop} onChange={num("aiEvaluateTop")} />
+        <NumField label="Nascondi se punteggio AI sotto (0 = mai)" value={s.autoHideBelow} onChange={num("autoHideBelow")} />
         <NumField label="Candidature da preparare" value={s.prepareCount} onChange={num("prepareCount")} />
         <NumField label="Promemoria follow-up (giorni)" value={s.followUpDays} onChange={num("followUpDays")} />
       </section>

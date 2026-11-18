@@ -65,7 +65,8 @@ export default function OffersPage() {
   const [batchErrors, setBatchErrors] = useState<string[]>([]);
   const [onlyHigh, setOnlyHigh] = useState(false);
   const [onlyAi, setOnlyAi] = useState(false);
-  const [evalReport, setEvalReport] = useState<{ done: number; failed: number; firstError: string; alta: number; media: number; bassa: number } | null>(null);
+  const [hideBelow, setHideBelow] = useState(20);
+  const [evalReport, setEvalReport] = useState<{ done: number; failed: number; firstError: string; alta: number; media: number; bassa: number; hidden: number } | null>(null);
   const [onlyReady, setOnlyReady] = useState(false);
   const [toast, setToast] = useState<{ message: string; action?: string; onAction?: () => void } | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -105,8 +106,11 @@ export default function OffersPage() {
   }, [ready, view, sort, load]);
 
   useEffect(() => {
-    api<{ settings: { prepareCount: number } }>("/api/settings")
-      .then((s) => setPrepareN(s.settings.prepareCount))
+    api<{ settings: { prepareCount: number; autoHideBelow: number } }>("/api/settings")
+      .then((s) => {
+        setPrepareN(s.settings.prepareCount);
+        setHideBelow(s.settings.autoHideBelow);
+      })
       .catch(() => {});
   }, []);
 
@@ -150,12 +154,19 @@ export default function OffersPage() {
     if (!targets.length) return;
     setBatchErrors([]);
     setBatch({ label: "Preparo CV e lettere su misura", done: 0, total: targets.length });
+    let hiddenCount = 0;
     await runQueue(
       targets,
       3,
       async (j) => {
         // se manca la valutazione AI la facciamo prima (serve per lingua e parole chiave)
-        if (!j.aiEval) await api(`/api/jobs/${encodeURIComponent(j.id)}/evaluate`, { method: "POST" }).catch(() => {});
+        if (!j.aiEval) {
+          const r = await api<{ hidden?: boolean }>(`/api/jobs/${encodeURIComponent(j.id)}/evaluate`, { method: "POST" }).catch(() => null);
+          if (r?.hidden) {
+            hiddenCount++;
+            return; // punteggio AI troppo basso: niente CV, l'offerta è già tra le scartate
+          }
+        }
         await api(`/api/jobs/${encodeURIComponent(j.id)}/tailor`, { method: "POST" });
       },
       (done, total, res, j) => {
@@ -165,6 +176,7 @@ export default function OffersPage() {
       },
     );
     setBatch(null);
+    if (hiddenCount) showToast({ message: `${hiddenCount} saltate e nascoste: punteggio AI sotto ${hideBelow}` });
     load();
   }
 
@@ -174,17 +186,18 @@ export default function OffersPage() {
     if (!ids.length) return showToast({ message: "Nessuna offerta da valutare" });
     setEvalReport(null);
     setBatch({ label: "Valutazione AI", done: 0, total: ids.length });
-    const rep = { done: 0, failed: 0, firstError: "", alta: 0, media: 0, bassa: 0 };
+    const rep = { done: 0, failed: 0, firstError: "", alta: 0, media: 0, bassa: 0, hidden: 0 };
     await runQueue(
       ids,
       4,
-      (id) => api<{ evaluation: AiEvaluation }>(`/api/jobs/${encodeURIComponent(id)}/evaluate`, { method: "POST" }),
+      (id) => api<{ evaluation: AiEvaluation; hidden?: boolean }>(`/api/jobs/${encodeURIComponent(id)}/evaluate`, { method: "POST" }),
       (done, total, res) => {
         setBatch({ label: "Valutazione AI", done, total });
         if (res.status === "fulfilled") {
           rep.done++;
           const c = res.value.evaluation.chance;
           if (c === "alta" || c === "media" || c === "bassa") rep[c]++;
+          if (res.value.hidden) rep.hidden++;
         } else {
           rep.failed++;
           rep.firstError ||= (res.reason as Error).message;
@@ -203,7 +216,7 @@ export default function OffersPage() {
     }
   }
 
-  function removed(job: JobRow, kind: "apply" | "dismiss" | "restore") {
+  function removed(job: JobRow, kind: "apply" | "dismiss" | "restore" | "hidden", score?: number) {
     setJobs((l) => l?.filter((j) => j.id !== job.id) ?? null);
     setCounts((c) => {
       if (!c) return c;
@@ -216,13 +229,13 @@ export default function OffersPage() {
       } else {
         n[bucket]--;
         n.all--;
-        if (kind === "dismiss") n.dismissed++;
+        if (kind === "dismiss" || kind === "hidden") n.dismissed++;
       }
       return n;
     });
-    if (kind === "dismiss")
+    if (kind === "dismiss" || kind === "hidden")
       showToast({
-        message: "Offerta scartata",
+        message: kind === "hidden" ? `Punteggio AI ${score}: nascosta tra le Scartate` : "Offerta scartata",
         action: "Annulla",
         onAction: async () => {
           setToast(null);
@@ -347,8 +360,14 @@ export default function OffersPage() {
           <p className="text-sm">
             {evalReport.done} offerte valutate: <span className="text-good">{evalReport.alta} chance alta</span>,{" "}
             <span className="text-signal">{evalReport.media} media</span>, <span className="text-bad">{evalReport.bassa} bassa</span>.
-            {evalReport.done > 0 && " Le vedi qui sotto, dalla più adatta."}
+            {evalReport.done > evalReport.hidden && " Le vedi qui sotto, dalla più adatta."}
           </p>
+          {evalReport.hidden > 0 && (
+            <p className="text-sm text-muted">
+              {evalReport.hidden === 1 ? "1 offerta aveva" : `${evalReport.hidden} offerte avevano`} punteggio AI sotto {hideBelow}: le ho
+              spostate tra le Scartate e non verranno più riproposte.
+            </p>
+          )}
           {evalReport.failed > 0 && (
             <p className="text-sm text-bad">
               Non riuscite: {evalReport.failed}. Errore: {evalReport.firstError}
@@ -397,7 +416,7 @@ export default function OffersPage() {
 
       <div className="space-y-3">
         {visible.map((j) => (
-          <JobCard key={j.id} job={j} onSeen={setSeen} onRemoved={removed} onChange={load} />
+          <JobCard key={j.id} job={j} hideBelow={hideBelow} onSeen={setSeen} onRemoved={removed} onChange={load} />
         ))}
       </div>
 
@@ -423,11 +442,12 @@ function SkeletonList() {
 }
 
 function JobCard({
-  job, onSeen, onRemoved, onChange,
+  job, hideBelow, onSeen, onRemoved, onChange,
 }: {
   job: JobRow;
+  hideBelow: number;
   onSeen: (job: JobRow, seen: boolean) => void;
-  onRemoved: (job: JobRow, kind: "apply" | "dismiss" | "restore") => void;
+  onRemoved: (job: JobRow, kind: "apply" | "dismiss" | "restore" | "hidden", score?: number) => void;
   onChange: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -456,9 +476,13 @@ function JobCard({
     setBusy(kind);
     setErr("");
     try {
-      if (kind === "tailor" && !ev) await api(`/api/jobs/${idEnc}/evaluate`, { method: "POST" }).catch(() => {});
-      const r = await api<{ evaluation?: AiEvaluation }>(`/api/jobs/${idEnc}/${kind}`, { method: "POST" });
+      if (kind === "tailor" && !ev) {
+        const pre = await api<{ evaluation: AiEvaluation; hidden?: boolean }>(`/api/jobs/${idEnc}/evaluate`, { method: "POST" }).catch(() => null);
+        if (pre?.hidden) return onRemoved(job, "hidden", Math.round(pre.evaluation.score));
+      }
+      const r = await api<{ evaluation?: AiEvaluation; hidden?: boolean }>(`/api/jobs/${idEnc}/${kind}`, { method: "POST" });
       if (kind === "apply" || kind === "dismiss" || kind === "restore") return onRemoved(job, kind);
+      if (r.hidden && r.evaluation) return onRemoved(job, "hidden", Math.round(r.evaluation.score));
       if (kind === "evaluate" && r.evaluation) setEv(r.evaluation);
       if (!seen) onSeen(job, true);
       await loadDetail();
@@ -482,6 +506,9 @@ function JobCard({
         <div className="min-w-0 flex-1">
           <div className="mb-1 flex flex-wrap items-center gap-1.5">
             {!dismissed && <SeenBadge seen={seen} />}
+            {dismissed && ev && hideBelow > 0 && ev.score < hideBelow && (
+              <span className="text-[11px] font-medium text-muted">Nascosta in automatico: punteggio AI sotto {hideBelow}</span>
+            )}
             {ev && (
               <span className={`text-[11px] font-medium ${CHANCE[ev.chance] ?? "text-muted"}`}>chance {ev.chance}</span>
             )}
