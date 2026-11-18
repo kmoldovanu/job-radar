@@ -11,23 +11,31 @@ type View = (typeof VIEWS)[number];
 /**
  * Offerte per vista:
  * - new: ancora da vedere (mai aperte) · seen: già viste · all: tutte le attive · dismissed: scartate
- * Ordinamento: score (punteggio) oppure recent (arrivate per ultime).
+ * Ordinamento:
+ * - ai (predefinito): prima le offerte valutate dall'AI per punteggio AI, poi le altre per punteggio rapido.
+ *   Le due scale non si mescolano: l'AI è severa, il punteggio rapido no.
+ * - quick: solo punteggio rapido (parole chiave) · recent: arrivate per ultime.
  */
 export async function GET(req: Request) {
   try {
     const params = new URL(req.url).searchParams;
     const view: View = (VIEWS as readonly string[]).includes(params.get("view") ?? "") ? (params.get("view") as View) : "new";
-    const sort = params.get("sort") === "recent" ? "recent" : "score";
+    const sortParam = params.get("sort");
+    const sort = sortParam === "recent" || sortParam === "quick" ? sortParam : "ai";
 
     const db = getDb();
-    const score = sql<number>`coalesce(${jobs.aiScore}, ${jobs.quickScore})`;
     const where: Record<View, SQL | undefined> = {
       new: and(eq(jobs.status, "new"), isNull(jobs.seenAt)),
       seen: and(eq(jobs.status, "new"), isNotNull(jobs.seenAt)),
       all: eq(jobs.status, "new"),
       dismissed: eq(jobs.status, "dismissed"),
     };
-    const order = sort === "recent" ? [desc(jobs.createdAt), desc(score)] : [desc(score), desc(jobs.createdAt)];
+    const order =
+      sort === "recent"
+        ? [desc(jobs.createdAt), desc(jobs.quickScore)]
+        : sort === "quick"
+          ? [desc(jobs.quickScore), desc(jobs.createdAt)]
+          : [sql`${jobs.aiScore} desc nulls last`, desc(jobs.quickScore), desc(jobs.createdAt)];
 
     const [rows, [counts]] = await Promise.all([
       db
@@ -49,6 +57,7 @@ export async function GET(req: Request) {
           all: sql<number>`count(*) filter (where ${jobs.status} = 'new')::int`,
           dismissed: sql<number>`count(*) filter (where ${jobs.status} = 'dismissed')::int`,
           noAi: sql<number>`count(*) filter (where ${jobs.status} = 'new' and ${jobs.aiEval} is null)::int`,
+          ai: sql<number>`count(*) filter (where ${jobs.status} = 'new' and ${jobs.aiEval} is not null)::int`,
         })
         .from(jobs),
     ]);

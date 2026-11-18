@@ -35,18 +35,21 @@ export function scoreColor(score: number) {
   return score >= 75 ? "#3fc1a0" : score >= 55 ? "#a6cf5e" : score >= 40 ? "#f4b740" : "#7a8ea2";
 }
 
-/** Punteggio come anello del radar: l'arco cresce con il match. */
+/**
+ * Punteggio come anello del radar: l'arco cresce con il match.
+ * AI = anello pieno e colorato; punteggio rapido = anello sottile e grigio (è solo una stima dalle parole chiave).
+ */
 export function ScoreRing({ score, ai }: { score: number; ai: boolean }) {
   const r = 22;
   const c = 2 * Math.PI * r;
   const pct = Math.max(0, Math.min(100, score)) / 100;
-  const color = scoreColor(score);
+  const color = ai ? scoreColor(score) : "#8c9fb2";
   return (
     <div className="relative size-14 shrink-0" title={ai ? `Punteggio AI: ${score}/100` : `Punteggio rapido (senza AI): ${score}/100`}>
       <svg viewBox="0 0 56 56" className="size-14 -rotate-90" aria-hidden="true">
         <circle cx="28" cy="28" r={r} fill="none" stroke="#24374c" strokeWidth="4" />
         <circle
-          cx="28" cy="28" r={r} fill="none" stroke={color} strokeWidth="4" strokeLinecap="round"
+          cx="28" cy="28" r={r} fill="none" stroke={color} strokeWidth={ai ? 4 : 2.5} strokeLinecap="round"
           strokeDasharray={`${c * pct} ${c}`}
         />
       </svg>

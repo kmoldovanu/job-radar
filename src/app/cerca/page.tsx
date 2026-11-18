@@ -289,7 +289,7 @@ export default function SearchPage() {
               </ul>
             </details>
           )}
-          <Link href="/?view=new&sort=recent" className="btn-primary w-full">
+          <Link href="/?view=new" className="btn-primary w-full">
             Vedi le offerte da vedere
           </Link>
         </section>

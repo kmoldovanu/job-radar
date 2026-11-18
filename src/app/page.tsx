@@ -40,13 +40,14 @@ interface Tailored {
 }
 
 type View = "new" | "seen" | "all" | "dismissed";
-type Sort = "score" | "recent";
+type Sort = "ai" | "quick" | "recent";
 interface Counts {
   new: number;
   seen: number;
   all: number;
   dismissed: number;
   noAi: number;
+  ai: number;
 }
 
 const MODE: Record<string, string> = { remote: "Remoto", hybrid: "Ibrido", onsite: "In sede", unknown: "" };
@@ -54,7 +55,7 @@ const CHANCE: Record<string, string> = { alta: "text-good", media: "text-signal"
 
 export default function OffersPage() {
   const [view, setView] = useState<View>("new");
-  const [sort, setSort] = useState<Sort>("score");
+  const [sort, setSort] = useState<Sort>("ai");
   const [ready, setReady] = useState(false);
   const [jobs, setJobs] = useState<JobRow[] | null>(null);
   const [counts, setCounts] = useState<Counts | null>(null);
@@ -63,16 +64,21 @@ export default function OffersPage() {
   const [batch, setBatch] = useState<{ label: string; done: number; total: number } | null>(null);
   const [batchErrors, setBatchErrors] = useState<string[]>([]);
   const [onlyHigh, setOnlyHigh] = useState(false);
+  const [onlyAi, setOnlyAi] = useState(false);
+  const [evalReport, setEvalReport] = useState<{ done: number; failed: number; firstError: string; alta: number; media: number; bassa: number } | null>(null);
   const [onlyReady, setOnlyReady] = useState(false);
   const [toast, setToast] = useState<{ message: string; action?: string; onAction?: () => void } | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toolsRef = useRef<HTMLDetailsElement>(null);
 
   // vista e ordinamento dall'indirizzo (?view=seen&sort=recent), così il link da "Cerca" apre la vista giusta
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
     const v = p.get("view");
     if (v === "new" || v === "seen" || v === "all" || v === "dismissed") setView(v);
-    if (p.get("sort") === "recent") setSort("recent");
+    const s = p.get("sort");
+    if (s === "recent" || s === "quick") setSort(s);
+    if (p.get("ai") === "1") setOnlyAi(true);
     setReady(true);
   }, []);
 
@@ -94,7 +100,7 @@ export default function OffersPage() {
     load();
     const p = new URLSearchParams();
     if (view !== "new") p.set("view", view);
-    if (sort !== "score") p.set("sort", sort);
+    if (sort !== "ai") p.set("sort", sort);
     window.history.replaceState(null, "", p.size ? `/?${p}` : "/");
   }, [ready, view, sort, load]);
 
@@ -112,10 +118,11 @@ export default function OffersPage() {
 
   const visible = useMemo(() => {
     let l = jobs ?? [];
+    if (onlyAi) l = l.filter((j) => j.aiEval);
     if (onlyHigh) l = l.filter((j) => j.aiEval?.chance === "alta");
     if (onlyReady) l = l.filter((j) => j.hasTailored);
     return l;
-  }, [jobs, onlyHigh, onlyReady]);
+  }, [jobs, onlyAi, onlyHigh, onlyReady]);
 
   /** Aggiorna lo stato "vista" senza togliere la scheda dalla lista (sparisce alla prossima apertura della vista). */
   const setSeen = useCallback(async (job: JobRow, seen: boolean) => {
@@ -165,12 +172,35 @@ export default function OffersPage() {
     const { ids, ai } = await api<{ ids: string[]; ai: boolean }>(`/api/jobs/pending-eval?scope=${scope}`);
     if (!ai) return setError("Valutazione AI non disponibile: imposta ANTHROPIC_API_KEY");
     if (!ids.length) return showToast({ message: "Nessuna offerta da valutare" });
+    setEvalReport(null);
     setBatch({ label: "Valutazione AI", done: 0, total: ids.length });
-    await runQueue(ids, 4, (id) => api(`/api/jobs/${encodeURIComponent(id)}/evaluate`, { method: "POST" }), (done, total) =>
-      setBatch({ label: "Valutazione AI", done, total }),
+    const rep = { done: 0, failed: 0, firstError: "", alta: 0, media: 0, bassa: 0 };
+    await runQueue(
+      ids,
+      4,
+      (id) => api<{ evaluation: AiEvaluation }>(`/api/jobs/${encodeURIComponent(id)}/evaluate`, { method: "POST" }),
+      (done, total, res) => {
+        setBatch({ label: "Valutazione AI", done, total });
+        if (res.status === "fulfilled") {
+          rep.done++;
+          const c = res.value.evaluation.chance;
+          if (c === "alta" || c === "media" || c === "bassa") rep[c]++;
+        } else {
+          rep.failed++;
+          rep.firstError ||= (res.reason as Error).message;
+        }
+      },
     );
     setBatch(null);
-    load();
+    setEvalReport(rep);
+    if (toolsRef.current) toolsRef.current.open = false;
+    // le offerte appena valutate in cima: ordinate per punteggio AI, solo quelle valutate
+    setOnlyAi(rep.done > 0);
+    if (view === "all" && sort === "ai") load();
+    else {
+      setView("all");
+      setSort("ai");
+    }
   }
 
   function removed(job: JobRow, kind: "apply" | "dismiss" | "restore") {
@@ -233,17 +263,29 @@ export default function OffersPage() {
       />
 
       <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
-        <Pill on={sort === "score"} onClick={() => setSort("score")}>Punteggio</Pill>
+        <Pill on={sort === "ai"} onClick={() => setSort("ai")}>Punteggio AI</Pill>
+        <Pill on={sort === "quick"} onClick={() => setSort("quick")}>Punteggio rapido</Pill>
         <Pill on={sort === "recent"} onClick={() => setSort("recent")}>Più recenti</Pill>
-        <span className="mx-1 h-5 w-px shrink-0 bg-line" aria-hidden="true" />
+      </div>
+      <div className="-mx-4 -mt-2 flex items-center gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
+        <Pill on={onlyAi} onClick={() => setOnlyAi(!onlyAi)}>
+          Solo valutate AI {counts ? <span className="tabular-nums opacity-70">{counts.ai}</span> : null}
+        </Pill>
         <Pill on={onlyHigh} onClick={() => setOnlyHigh(!onlyHigh)}>Chance alta</Pill>
         <Pill on={onlyReady} onClick={() => setOnlyReady(!onlyReady)}>CV pronto</Pill>
       </div>
+      <p className="-mt-1 text-[13px] leading-snug text-muted">
+        {sort === "ai"
+          ? "In cima le offerte valutate dall'AI, dalla più adatta. Sotto quelle senza valutazione, per punteggio rapido."
+          : sort === "quick"
+            ? "Per punteggio rapido: solo parole chiave del titolo e delle competenze, senza AI."
+            : "Dalle offerte trovate per ultime."}
+      </p>
 
       <ErrorBox error={error} />
 
       {view !== "dismissed" && jobs && jobs.length > 0 && (
-        <details className="group rounded-2xl border border-line bg-panel">
+        <details ref={toolsRef} className="group rounded-2xl border border-line bg-panel">
           <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 px-4 text-sm font-medium [&::-webkit-details-marker]:hidden">
             <Icon name="sparkle" className="size-4 text-signal" />
             Strumenti AI
@@ -294,6 +336,36 @@ export default function OffersPage() {
         </details>
       )}
 
+      {evalReport && (
+        <div className="card space-y-2 border-signal/30" role="status">
+          <div className="flex items-start justify-between gap-2">
+            <h2 className="text-lg font-semibold">Valutazione AI finita</h2>
+            <button className="btn-icon size-9" onClick={() => setEvalReport(null)} aria-label="Chiudi">
+              <Icon name="x" className="size-4" />
+            </button>
+          </div>
+          <p className="text-sm">
+            {evalReport.done} offerte valutate: <span className="text-good">{evalReport.alta} chance alta</span>,{" "}
+            <span className="text-signal">{evalReport.media} media</span>, <span className="text-bad">{evalReport.bassa} bassa</span>.
+            {evalReport.done > 0 && " Le vedi qui sotto, dalla più adatta."}
+          </p>
+          {evalReport.failed > 0 && (
+            <p className="text-sm text-bad">
+              Non riuscite: {evalReport.failed}. Errore: {evalReport.firstError}
+            </p>
+          )}
+          {evalReport.done >= 5 && evalReport.bassa / evalReport.done >= 0.6 && (
+            <p className="text-sm text-muted">
+              L&apos;AI è volutamente severa, ma se quasi tutte hanno chance bassa la ricerca sta trovando offerte lontane dal tuo
+              profilo. Controlla i ruoli cercati e le parole da escludere in{" "}
+              <Link href="/profilo" className="text-signal underline">Profilo</Link>, oppure alza il &ldquo;Match rapido
+              minimo&rdquo; in <Link href="/impostazioni" className="text-signal underline">Impostazioni</Link>. Apri qualche
+              offerta e leggi &ldquo;Cosa manca&rdquo;: ti dice cosa la frena.
+            </p>
+          )}
+        </div>
+      )}
+
       {view === "new" && unseenVisible > 1 && (
         <button className="flex min-h-10 items-center gap-1.5 text-sm text-muted hover:text-ink" onClick={markAllSeen}>
           <Icon name="check" className="size-4" />
@@ -312,7 +384,7 @@ export default function OffersPage() {
             </>
           ) : view === "dismissed" ? (
             "Nessuna offerta scartata."
-          ) : onlyHigh || onlyReady ? (
+          ) : onlyAi || onlyHigh || onlyReady ? (
             "Nessuna offerta con questi filtri."
           ) : (
             <>
