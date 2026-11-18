@@ -1,6 +1,21 @@
-# 📡 JobRadar
+# JobRadar
 
 Web app personale per cercare lavoro in tutto il mondo (remoto, Europa e oltre), preparare CV e lettere su misura con l'AI e tracciare le candidature. Interfaccia in italiano, pensata per il telefono e installabile come app (PWA).
+
+**Online:** [job-radar-km.vercel.app](https://job-radar-km.vercel.app) (l'accesso è protetto da password: è un'app personale)
+
+<img src="docs/offerte.webp" alt="Elenco delle offerte sul telefono, con il punteggio AI di compatibilità" width="300">
+
+<sub>Schermata con offerte di esempio.</sub>
+
+## In breve
+
+- **Sette fonti ufficiali in parallelo** più le pagine carriere Greenhouse, Lever e Ashby, con deduplica tra fonti.
+- **Filtri scritti in codice e testati**: freschezza, anti-truffa, idoneità geografica per un cittadino UE, lingua e un punteggio di compatibilità calcolato senza AI.
+- **Claude come recruiter severo**: valuta ogni offerta con output JSON validato da zod, poi prepara CV e lettera su misura nella lingua dell'annuncio.
+- **Controllo anti-invenzioni**: dopo la generazione il codice toglie dal CV aziende, formazione, competenze e numeri che non compaiono nel CV originale.
+- **Pensata per serverless**: nessuna richiesta lunga, le operazioni in blocco le orchestra il browser con una coda di richieste in parallelo.
+- **Stack**: Next.js 16, React 19, TypeScript, Tailwind CSS 4, PostgreSQL con Drizzle ORM, API di Claude, PDF e Word generati lato server, test con Vitest.
 
 ## Cosa fa
 
