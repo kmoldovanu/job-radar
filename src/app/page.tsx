@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Empty, ErrorBox, Progress, ScoreBadge, ViaSource } from "@/components/ui";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Icon } from "@/components/Icon";
+import { Empty, ErrorBox, PageHeader, Pill, Progress, ScoreRing, SeenBadge, Segmented, Toast, ViaSource } from "@/components/ui";
 import { api, companySearchUrl, daysAgo } from "@/lib/client";
 import { runQueue } from "@/lib/queue";
 import type { AiEvaluation, MatchDetails, TailoredCv } from "@/lib/types";
@@ -17,6 +18,9 @@ interface JobRow {
   url: string;
   sourceUrl: string;
   postedAt: string | null;
+  createdAt: string;
+  seenAt: string | null;
+  status: string;
   salary: string | null;
   quickScore: number;
   aiScore: number | null;
@@ -35,44 +39,107 @@ interface Tailored {
   createdAt: string;
 }
 
-const MODE: Record<string, string> = { remote: "🌍 Remoto", hybrid: "🏢 Ibrido", onsite: "📍 In sede", unknown: "" };
+type View = "new" | "seen" | "all" | "dismissed";
+type Sort = "score" | "recent";
+interface Counts {
+  new: number;
+  seen: number;
+  all: number;
+  dismissed: number;
+  noAi: number;
+}
+
+const MODE: Record<string, string> = { remote: "Remoto", hybrid: "Ibrido", onsite: "In sede", unknown: "" };
+const CHANCE: Record<string, string> = { alta: "text-good", media: "text-signal", bassa: "text-bad" };
 
 export default function OffersPage() {
+  const [view, setView] = useState<View>("new");
+  const [sort, setSort] = useState<Sort>("score");
+  const [ready, setReady] = useState(false);
   const [jobs, setJobs] = useState<JobRow[] | null>(null);
+  const [counts, setCounts] = useState<Counts | null>(null);
   const [error, setError] = useState("");
   const [prepareN, setPrepareN] = useState(5);
   const [batch, setBatch] = useState<{ label: string; done: number; total: number } | null>(null);
   const [batchErrors, setBatchErrors] = useState<string[]>([]);
-  const [filter, setFilter] = useState<"all" | "ready" | "alta">("all");
+  const [onlyHigh, setOnlyHigh] = useState(false);
+  const [onlyReady, setOnlyReady] = useState(false);
+  const [toast, setToast] = useState<{ message: string; action?: string; onAction?: () => void } | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // vista e ordinamento dall'indirizzo (?view=seen&sort=recent), così il link da "Cerca" apre la vista giusta
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    const v = p.get("view");
+    if (v === "new" || v === "seen" || v === "all" || v === "dismissed") setView(v);
+    if (p.get("sort") === "recent") setSort("recent");
+    setReady(true);
+  }, []);
 
   const load = useCallback(async () => {
     try {
-      const [{ jobs }, s] = await Promise.all([
-        api<{ jobs: JobRow[] }>("/api/jobs"),
-        api<{ settings: { prepareCount: number } }>("/api/settings"),
-      ]);
-      setJobs(jobs);
-      setPrepareN(s.settings.prepareCount);
+      const r = await api<{ jobs: JobRow[]; counts: Counts }>(`/api/jobs?view=${view}&sort=${sort}`);
+      setJobs(r.jobs);
+      setCounts(r.counts);
+      setError("");
     } catch (e) {
       setError((e as Error).message);
       setJobs([]);
     }
-  }, []);
+  }, [view, sort]);
 
   useEffect(() => {
+    if (!ready) return;
+    setJobs(null);
     load();
-  }, [load]);
+    const p = new URLSearchParams();
+    if (view !== "new") p.set("view", view);
+    if (sort !== "score") p.set("sort", sort);
+    window.history.replaceState(null, "", p.size ? `/?${p}` : "/");
+  }, [ready, view, sort, load]);
+
+  useEffect(() => {
+    api<{ settings: { prepareCount: number } }>("/api/settings")
+      .then((s) => setPrepareN(s.settings.prepareCount))
+      .catch(() => {});
+  }, []);
+
+  function showToast(t: typeof toast) {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast(t);
+    toastTimer.current = setTimeout(() => setToast(null), 5000);
+  }
 
   const visible = useMemo(() => {
-    if (!jobs) return [];
-    if (filter === "ready") return jobs.filter((j) => j.hasTailored);
-    if (filter === "alta") return jobs.filter((j) => j.aiEval?.chance === "alta");
-    return jobs;
-  }, [jobs, filter]);
+    let l = jobs ?? [];
+    if (onlyHigh) l = l.filter((j) => j.aiEval?.chance === "alta");
+    if (onlyReady) l = l.filter((j) => j.hasTailored);
+    return l;
+  }, [jobs, onlyHigh, onlyReady]);
+
+  /** Aggiorna lo stato "vista" senza togliere la scheda dalla lista (sparisce alla prossima apertura della vista). */
+  const setSeen = useCallback(async (job: JobRow, seen: boolean) => {
+    if (!!job.seenAt === seen) return;
+    setJobs((l) => l?.map((j) => (j.id === job.id ? { ...j, seenAt: seen ? new Date().toISOString() : null } : j)) ?? null);
+    setCounts((c) => (c ? { ...c, new: c.new + (seen ? -1 : 1), seen: c.seen + (seen ? 1 : -1) } : c));
+    try {
+      await api(`/api/jobs/${encodeURIComponent(job.id)}/seen`, { method: "POST", json: { seen } });
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }, []);
+
+  async function markAllSeen() {
+    const ids = visible.filter((j) => !j.seenAt).map((j) => j.id);
+    if (!ids.length) return;
+    await api("/api/jobs/seen", { method: "POST", json: { ids } });
+    showToast({ message: `${ids.length} offerte segnate come viste` });
+    load();
+  }
 
   async function prepareBatch() {
     if (!jobs) return;
-    const targets = jobs.filter((j) => !j.hasTailored).slice(0, prepareN);
+    const targets = visible.filter((j) => !j.hasTailored).slice(0, prepareN);
     if (!targets.length) return;
     setBatchErrors([]);
     setBatch({ label: "Preparo CV e lettere su misura", done: 0, total: targets.length });
@@ -94,10 +161,10 @@ export default function OffersPage() {
     load();
   }
 
-  async function evaluateBatch() {
-    const { ids, ai } = await api<{ ids: string[]; ai: boolean }>("/api/jobs/pending-eval");
+  async function evaluateBatch(scope: "top" | "all") {
+    const { ids, ai } = await api<{ ids: string[]; ai: boolean }>(`/api/jobs/pending-eval?scope=${scope}`);
     if (!ai) return setError("Valutazione AI non disponibile: imposta ANTHROPIC_API_KEY");
-    if (!ids.length) return;
+    if (!ids.length) return showToast({ message: "Nessuna offerta da valutare" });
     setBatch({ label: "Valutazione AI", done: 0, total: ids.length });
     await runQueue(ids, 4, (id) => api(`/api/jobs/${encodeURIComponent(id)}/evaluate`, { method: "POST" }), (done, total) =>
       setBatch({ label: "Valutazione AI", done, total }),
@@ -106,114 +173,225 @@ export default function OffersPage() {
     load();
   }
 
-  const remove = (id: string) => setJobs((l) => l?.filter((j) => j.id !== id) ?? null);
-  const notTailored = jobs?.filter((j) => !j.hasTailored).length ?? 0;
-  const notEvaluated = jobs?.filter((j) => !j.aiEval).length ?? 0;
+  function removed(job: JobRow, kind: "apply" | "dismiss" | "restore") {
+    setJobs((l) => l?.filter((j) => j.id !== job.id) ?? null);
+    setCounts((c) => {
+      if (!c) return c;
+      const n = { ...c };
+      const bucket = job.seenAt ? "seen" : "new";
+      if (kind === "restore") {
+        n.dismissed--;
+        n[bucket]++;
+        n.all++;
+      } else {
+        n[bucket]--;
+        n.all--;
+        if (kind === "dismiss") n.dismissed++;
+      }
+      return n;
+    });
+    if (kind === "dismiss")
+      showToast({
+        message: "Offerta scartata",
+        action: "Annulla",
+        onAction: async () => {
+          setToast(null);
+          await api(`/api/jobs/${encodeURIComponent(job.id)}/restore`, { method: "POST" });
+          load();
+        },
+      });
+    if (kind === "apply") showToast({ message: "Aggiunta alle candidature" });
+    if (kind === "restore") showToast({ message: "Offerta ripristinata" });
+  }
+
+  const unseenVisible = visible.filter((j) => !j.seenAt).length;
+  const notTailored = visible.filter((j) => !j.hasTailored).length;
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <div>
-          <h1 className="text-2xl font-bold">Offerte</h1>
-          <p className="text-sm text-slate-500">{jobs ? `${jobs.length} offerte da valutare` : "Caricamento…"}</p>
-        </div>
-        <Link href="/cerca" className="btn-secondary">
-          🔎 Cerca ora
-        </Link>
+      <PageHeader
+        title="Offerte"
+        subtitle={counts ? `${counts.new} da vedere · ${counts.seen} già viste` : "Caricamento…"}
+        action={
+          <Link href="/cerca" className="btn-secondary">
+            <Icon name="search" className="size-4" />
+            Cerca
+          </Link>
+        }
+      />
+
+      <Segmented
+        label="Quali offerte mostrare"
+        value={view}
+        onChange={setView}
+        options={[
+          { value: "new", label: "Da vedere", count: counts?.new },
+          { value: "seen", label: "Viste", count: counts?.seen },
+          { value: "all", label: "Tutte", count: counts?.all },
+          { value: "dismissed", label: "Scartate", count: counts?.dismissed },
+        ]}
+      />
+
+      <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
+        <Pill on={sort === "score"} onClick={() => setSort("score")}>Punteggio</Pill>
+        <Pill on={sort === "recent"} onClick={() => setSort("recent")}>Più recenti</Pill>
+        <span className="mx-1 h-5 w-px shrink-0 bg-line" aria-hidden="true" />
+        <Pill on={onlyHigh} onClick={() => setOnlyHigh(!onlyHigh)}>Chance alta</Pill>
+        <Pill on={onlyReady} onClick={() => setOnlyReady(!onlyReady)}>CV pronto</Pill>
       </div>
 
       <ErrorBox error={error} />
 
-      {jobs && jobs.length > 0 && (
-        <div className="card space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <label className="text-sm" htmlFor="n">
-              Prepara
-            </label>
-            <input
-              id="n"
-              type="number"
-              min={1}
-              max={30}
-              value={prepareN}
-              onChange={(e) => setPrepareN(Math.max(1, Math.min(30, Number(e.target.value) || 1)))}
-              className="input w-16 py-1.5"
-            />
-            <button className="btn-primary" disabled={!!batch || !notTailored} onClick={prepareBatch}>
-              ✨ Prepara {Math.min(prepareN, notTailored)} candidature
-            </button>
-            {notEvaluated > 0 && (
-              <button className="btn-ghost" disabled={!!batch} onClick={evaluateBatch}>
-                🤖 Valuta con AI
-              </button>
-            )}
+      {view !== "dismissed" && jobs && jobs.length > 0 && (
+        <details className="group rounded-2xl border border-line bg-panel">
+          <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 px-4 text-sm font-medium [&::-webkit-details-marker]:hidden">
+            <Icon name="sparkle" className="size-4 text-signal" />
+            Strumenti AI
+            <span className="text-muted">
+              {counts?.noAi ? `· ${counts.noAi} senza valutazione AI` : "· tutte valutate"}
+            </span>
+            <Icon name="chevron" className="ml-auto size-4 text-muted transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="space-y-4 border-t border-line p-4">
+            <div className="space-y-2">
+              <p className="text-sm text-muted">
+                La valutazione AI legge l&apos;annuncio come un recruiter e dà un punteggio con chance, punti di forza e cosa manca.
+                Senza AI vedi il punteggio rapido, calcolato solo dalle parole chiave.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button className="btn-secondary" disabled={!!batch || !counts?.noAi} onClick={() => evaluateBatch("top")}>
+                  Valuta le migliori
+                </button>
+                <button className="btn-ghost" disabled={!!batch || !counts?.noAi} onClick={() => evaluateBatch("all")}>
+                  Valuta tutte ({Math.min(counts?.noAi ?? 0, 100)})
+                </button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm text-muted">CV e lettera su misura, in blocco, per le prime offerte della lista qui sotto che non li hanno ancora.</p>
+              <div className="flex items-center gap-2">
+                <label className="sr-only" htmlFor="n">
+                  Quante candidature preparare
+                </label>
+                <input
+                  id="n"
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={30}
+                  value={prepareN}
+                  onChange={(e) => setPrepareN(Math.max(1, Math.min(30, Number(e.target.value) || 1)))}
+                  className="input w-20 text-center"
+                />
+                <button className="btn-primary flex-1" disabled={!!batch || !notTailored} onClick={prepareBatch}>
+                  Prepara {Math.min(prepareN, notTailored)} candidature
+                </button>
+              </div>
+            </div>
+            {batch && <Progress {...batch} />}
+            {batchErrors.length > 0 && <ErrorBox error={batchErrors.join("\n")} />}
           </div>
-          <p className="text-xs text-slate-500">
-            Genera in blocco CV + lettera su misura per le migliori offerte ancora senza CV (3 alla volta).
-          </p>
-          {batch && <Progress {...batch} />}
-          {batchErrors.length > 0 && <ErrorBox error={batchErrors.join("\n")} />}
-          <div className="flex gap-1 text-sm">
-            {(
-              [
-                ["all", "Tutte"],
-                ["alta", "Chance alta"],
-                ["ready", "CV pronto"],
-              ] as const
-            ).map(([k, l]) => (
-              <button key={k} onClick={() => setFilter(k)} className={`rounded-full px-3 py-1 ${filter === k ? "bg-brand-600 text-white" : "bg-slate-100 dark:bg-slate-800"}`}>
-                {l}
-              </button>
-            ))}
-          </div>
-        </div>
+        </details>
       )}
 
-      {jobs && jobs.length === 0 && !error && (
+      {view === "new" && unseenVisible > 1 && (
+        <button className="flex min-h-10 items-center gap-1.5 text-sm text-muted hover:text-ink" onClick={markAllSeen}>
+          <Icon name="check" className="size-4" />
+          Segna tutte come viste ({unseenVisible})
+        </button>
+      )}
+
+      {jobs === null && <SkeletonList />}
+
+      {jobs && visible.length === 0 && !error && (
         <Empty>
-          Nessuna offerta per ora. Completa il <Link className="underline" href="/profilo">profilo</Link> e poi{" "}
-          <Link className="underline" href="/cerca">avvia una ricerca</Link>.
+          {view === "new" && counts && counts.all > 0 ? (
+            <>
+              Hai visto tutto. <Link className="text-signal underline" href="/cerca">Avvia una nuova ricerca</Link> o riguarda le{" "}
+              <button className="text-signal underline" onClick={() => setView("seen")}>offerte già viste</button>.
+            </>
+          ) : view === "dismissed" ? (
+            "Nessuna offerta scartata."
+          ) : onlyHigh || onlyReady ? (
+            "Nessuna offerta con questi filtri."
+          ) : (
+            <>
+              Nessuna offerta per ora. Completa il <Link className="text-signal underline" href="/profilo">profilo</Link> e poi{" "}
+              <Link className="text-signal underline" href="/cerca">avvia una ricerca</Link>.
+            </>
+          )}
         </Empty>
       )}
 
       <div className="space-y-3">
         {visible.map((j) => (
-          <JobCard key={j.id} job={j} onRemove={remove} onChange={load} />
+          <JobCard key={j.id} job={j} onSeen={setSeen} onRemoved={removed} onChange={load} />
         ))}
       </div>
+
+      {toast && <Toast {...toast} />}
     </div>
   );
 }
 
-function JobCard({ job, onRemove, onChange }: { job: JobRow; onRemove: (id: string) => void; onChange: () => void }) {
+function SkeletonList() {
+  return (
+    <div className="space-y-3" aria-hidden="true">
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="card flex gap-3">
+          <div className="size-14 shrink-0 rounded-full border-4 border-line" />
+          <div className="flex-1 space-y-2 pt-1">
+            <div className="h-4 w-3/4 rounded bg-panel-2" />
+            <div className="h-3 w-1/2 rounded bg-panel-2" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function JobCard({
+  job, onSeen, onRemoved, onChange,
+}: {
+  job: JobRow;
+  onSeen: (job: JobRow, seen: boolean) => void;
+  onRemoved: (job: JobRow, kind: "apply" | "dismiss" | "restore") => void;
+  onChange: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const [detail, setDetail] = useState<{ job: { description: string }; tailored: Tailored | null } | null>(null);
   const [busy, setBusy] = useState("");
   const [err, setErr] = useState("");
-  const score = job.aiScore ?? job.quickScore;
+  const [ev, setEv] = useState<AiEvaluation | null>(job.aiEval);
+  const score = ev ? Math.round(ev.score) : (job.aiScore ?? job.quickScore);
   const idEnc = encodeURIComponent(job.id);
+  const seen = !!job.seenAt;
+  const dismissed = job.status === "dismissed";
 
   async function loadDetail() {
     setDetail(await api(`/api/jobs/${idEnc}`));
   }
 
-  async function toggle() {
+  function toggle() {
     setOpen(!open);
-    if (!open && !detail) loadDetail().catch((e) => setErr(e.message));
+    if (!open) {
+      if (!seen && !dismissed) onSeen(job, true);
+      if (!detail) loadDetail().catch((e) => setErr(e.message));
+    }
   }
 
-  async function act(kind: "apply" | "dismiss" | "tailor" | "evaluate") {
+  async function act(kind: "apply" | "dismiss" | "tailor" | "evaluate" | "restore") {
     setBusy(kind);
     setErr("");
     try {
-      if (kind === "tailor" && !job.aiEval) await api(`/api/jobs/${idEnc}/evaluate`, { method: "POST" }).catch(() => {});
-      await api(`/api/jobs/${idEnc}/${kind}`, { method: "POST" });
-      if (kind === "apply" || kind === "dismiss") onRemove(job.id);
-      else {
-        await loadDetail();
-        setOpen(true);
-        onChange();
-      }
+      if (kind === "tailor" && !ev) await api(`/api/jobs/${idEnc}/evaluate`, { method: "POST" }).catch(() => {});
+      const r = await api<{ evaluation?: AiEvaluation }>(`/api/jobs/${idEnc}/${kind}`, { method: "POST" });
+      if (kind === "apply" || kind === "dismiss" || kind === "restore") return onRemoved(job, kind);
+      if (kind === "evaluate" && r.evaluation) setEv(r.evaluation);
+      if (!seen) onSeen(job, true);
+      await loadDetail();
+      setOpen(true);
+      if (kind === "tailor") onChange();
     } catch (e) {
       setErr((e as Error).message);
     } finally {
@@ -223,125 +401,167 @@ function JobCard({ job, onRemove, onChange }: { job: JobRow; onRemove: (id: stri
 
   const t = detail?.tailored;
   const dl = (doc: string, format: string) => `/api/jobs/${idEnc}/download?doc=${doc}&format=${format}`;
+  const markSeenOnOpen = () => !seen && !dismissed && onSeen(job, true);
 
   return (
-    <article className="card space-y-3">
+    <article className={`card space-y-3 transition-colors ${!seen && !dismissed ? "border-signal/25" : ""}`}>
       <div className="flex gap-3">
-        <ScoreBadge score={score} ai={job.aiScore != null} />
+        <ScoreRing score={score} ai={!!ev} />
         <div className="min-w-0 flex-1">
-          <h2 className="font-semibold leading-snug">{job.title}</h2>
-          <p className="text-sm text-slate-600 dark:text-slate-300">
+          <div className="mb-1 flex flex-wrap items-center gap-1.5">
+            {!dismissed && <SeenBadge seen={seen} />}
+            {ev && (
+              <span className={`text-[11px] font-medium ${CHANCE[ev.chance] ?? "text-muted"}`}>chance {ev.chance}</span>
+            )}
+            {(job.hasTailored || t) && <span className="text-[11px] font-medium text-good">CV pronto</span>}
+          </div>
+          <h2 className={`text-[17px] font-semibold leading-snug ${seen ? "text-slate-200" : "text-ink"}`}>{job.title}</h2>
+          <p className="mt-0.5 text-sm text-slate-300">
             {job.company}
-            {job.location ? ` · ${job.location}` : ""}
+            {job.location ? <span className="text-muted">, {job.location}</span> : null}
           </p>
-          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+          <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5">
             {MODE[job.workMode] && <span className="chip">{MODE[job.workMode]}</span>}
-            {job.aiEval && <span className="chip">chance {job.aiEval.chance}</span>}
-            {job.salary && <span className="chip">💶 {job.salary}</span>}
-            {job.postedAt && <span className="text-xs text-slate-500">{daysAgo(job.postedAt)}</span>}
+            {job.salary && <span className="chip">{job.salary}</span>}
+            {job.postedAt && <span className="text-xs text-muted">{daysAgo(job.postedAt)}</span>}
             <ViaSource source={job.source} url={job.sourceUrl} />
           </div>
         </div>
       </div>
 
-      {job.aiEval?.summary && <p className="text-sm text-slate-700 dark:text-slate-300">{job.aiEval.summary}</p>}
-      {!job.aiEval && job.match?.notes.length ? <p className="text-xs text-amber-700">{job.match.notes.join(" · ")}</p> : null}
+      {ev?.summary && <p className="text-[15px] leading-relaxed text-slate-200">{ev.summary}</p>}
+      {!ev && job.match?.notes.length ? <p className="text-xs text-signal/90">{job.match.notes.join("; ")}</p> : null}
 
-      <div className="flex flex-wrap gap-2">
-        <a href={job.url} target="_blank" rel="noopener noreferrer" className="btn-secondary">
-          ↗ Apri annuncio
-        </a>
-        <a
-          href={companySearchUrl(job.company, job.title)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn-secondary"
-          title="Cerca lo stesso annuncio sulla pagina careers dell'azienda"
-        >
-          🔍 Sito dell&apos;azienda
-        </a>
-        {job.hasTailored || t ? (
-          <>
-            <a className="btn-secondary" href={dl("cv", "pdf")}>⬇ CV PDF</a>
-            <a className="btn-secondary" href={dl("cv", "docx")}>CV Word</a>
-            <a className="btn-secondary" href={dl("letter", "pdf")}>⬇ Lettera PDF</a>
-            <a className="btn-secondary" href={dl("letter", "docx")}>Lettera Word</a>
-          </>
-        ) : (
-          <button className="btn-secondary" disabled={!!busy} onClick={() => act("tailor")}>
-            {busy === "tailor" ? "Preparo…" : "✨ Prepara CV"}
+      {dismissed ? (
+        <div className="flex gap-2">
+          <a href={job.url} target="_blank" rel="noopener noreferrer" className="btn-secondary flex-1">
+            <Icon name="external" className="size-4" />
+            Apri annuncio
+          </a>
+          <button className="btn-primary flex-1" disabled={!!busy} onClick={() => act("restore")}>
+            <Icon name="undo" className="size-4" />
+            Ripristina
           </button>
-        )}
-        <button className="btn-success" disabled={!!busy} onClick={() => act("apply")}>
-          ✅ Candidato!
-        </button>
-        <button className="btn-ghost" disabled={!!busy} onClick={() => act("dismiss")}>
-          Non mi interessa
-        </button>
-        <button className="btn-ghost ml-auto" onClick={toggle}>
-          {open ? "Chiudi ▲" : "Dettagli ▼"}
-        </button>
-      </div>
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          <a href={job.url} target="_blank" rel="noopener noreferrer" className="btn-secondary min-w-0 flex-1 px-2" onClick={markSeenOnOpen} aria-label="Apri annuncio">
+            <Icon name="external" className="size-4 shrink-0" />
+            Annuncio
+          </a>
+          <button className="btn-success min-w-0 flex-1 px-2" disabled={!!busy} onClick={() => act("apply")}>
+            <Icon name="check" className="size-4" />
+            Candidato
+          </button>
+          <button
+            className="btn-icon"
+            onClick={() => onSeen(job, !seen)}
+            aria-label={seen ? "Segna come da vedere" : "Segna come vista"}
+            title={seen ? "Segna come da vedere" : "Segna come vista"}
+          >
+            <Icon name={seen ? "eyeOff" : "eye"} className="size-[18px]" />
+          </button>
+          <button className="btn-icon hover:text-bad" disabled={!!busy} onClick={() => act("dismiss")} aria-label="Non mi interessa" title="Non mi interessa">
+            <Icon name="x" className="size-[18px]" />
+          </button>
+        </div>
+      )}
+
+      <button
+        onClick={toggle}
+        aria-expanded={open}
+        className="flex min-h-9 w-full items-center justify-center gap-1 rounded-lg text-[13px] text-muted hover:text-ink"
+      >
+        {open ? "Meno dettagli" : "Dettagli, CV e lettera"}
+        <Icon name="chevron" className={`size-4 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
       <ErrorBox error={err} />
 
       {open && (
-        <div className="space-y-4 border-t border-slate-200 pt-3 text-sm dark:border-slate-800">
-          {job.aiEval && (
-            <div className="grid gap-3 sm:grid-cols-3">
-              <List title="Punti di forza" items={job.aiEval.strengths} tone="text-emerald-700 dark:text-emerald-400" />
-              <List title="Cosa manca" items={job.aiEval.gaps} tone="text-amber-700 dark:text-amber-400" />
-              <List title="Ostacoli" items={job.aiEval.obstacles} tone="text-red-700 dark:text-red-400" />
+        <div className="space-y-4 border-t border-line pt-4 text-sm">
+          <div className="flex flex-wrap gap-2">
+            <a
+              href={companySearchUrl(job.company, job.title)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-secondary"
+              title="Cerca lo stesso annuncio sulla pagina careers dell'azienda"
+            >
+              <Icon name="globe" className="size-4" />
+              Sito dell&apos;azienda
+            </a>
+            <button className="btn-secondary" disabled={!!busy} onClick={() => act("evaluate")}>
+              <Icon name={ev ? "refresh" : "sparkle"} className="size-4" />
+              {busy === "evaluate" ? "Valuto…" : ev ? "Rivaluta con AI" : "Valuta con AI"}
+            </button>
+            {!(job.hasTailored || t) && (
+              <button className="btn-primary" disabled={!!busy} onClick={() => act("tailor")}>
+                <Icon name="sparkle" className="size-4" />
+                {busy === "tailor" ? "Preparo…" : "Prepara CV e lettera"}
+              </button>
+            )}
+          </div>
+
+          {ev && (
+            <div className="grid gap-4 sm:grid-cols-3">
+              <List title="Punti di forza" items={ev.strengths} dot="bg-good" />
+              <List title="Cosa manca" items={ev.gaps} dot="bg-signal" />
+              <List title="Ostacoli" items={ev.obstacles} dot="bg-bad" />
             </div>
           )}
-          {!job.aiEval && (
-            <button className="btn-ghost" disabled={!!busy} onClick={() => act("evaluate")}>
-              {busy === "evaluate" ? "Valuto…" : "🤖 Valuta con AI"}
-            </button>
-          )}
           {job.match && (
-            <p className="text-xs text-slate-500">
-              Match rapido {job.match.score}/100 · titolo {job.match.titleScore}% · competenze trovate:{" "}
+            <p className="text-xs leading-relaxed text-muted">
+              Punteggio rapido {job.match.score}/100: titolo {job.match.titleScore}%, competenze trovate{" "}
               {job.match.skillsFound.join(", ") || "nessuna"}
-              {job.match.yearsRequired != null ? ` · richiede ${job.match.yearsRequired}+ anni` : ""}
-              {job.match.notes.length ? ` · ${job.match.notes.join(" · ")}` : ""}
+              {job.match.yearsRequired != null ? `, richiede ${job.match.yearsRequired}+ anni` : ""}
+              {job.match.notes.length ? `. ${job.match.notes.join("; ")}` : ""}
             </p>
           )}
 
-          {t && (
-            <div className="space-y-2 rounded-xl bg-slate-50 p-3 dark:bg-slate-950">
-              <div className="flex items-center justify-between">
+          {(job.hasTailored || t) && (
+            <div className="space-y-3 rounded-xl border border-line bg-night p-3">
+              <div className="flex items-center justify-between gap-2">
                 <h3 className="font-semibold">
-                  CV su misura ({t.language.toUpperCase()}) — {t.cv.headline}
+                  CV su misura {t && <span className="text-muted">({t.language.toUpperCase()})</span>}
                 </h3>
-                <button className="btn-ghost text-xs" disabled={!!busy} onClick={() => act("tailor")}>
-                  {busy === "tailor" ? "…" : "↻ Rigenera"}
+                <button className="btn-ghost min-h-9 px-2 text-xs" disabled={!!busy} onClick={() => act("tailor")}>
+                  <Icon name="refresh" className="size-3.5" />
+                  {busy === "tailor" ? "Rigenero…" : "Rigenera"}
                 </button>
               </div>
-              {t.corrections.length > 0 ? (
-                <details className="text-xs">
-                  <summary className="cursor-pointer text-amber-700 dark:text-amber-400">
-                    🛡️ {t.corrections.length} correzioni anti-invenzione applicate
-                  </summary>
-                  <ul className="mt-1 list-disc space-y-0.5 pl-5 text-slate-600 dark:text-slate-400">
-                    {t.corrections.map((c, i) => (
-                      <li key={i}>{c}</li>
-                    ))}
-                  </ul>
-                </details>
-              ) : (
-                <p className="text-xs text-emerald-700">🛡️ Controllo anti-invenzione: nessuna correzione necessaria</p>
-              )}
-              <LetterBox letter={t.letter} />
+              {t?.cv.headline && <p className="text-slate-300">{t.cv.headline}</p>}
+              <div className="grid grid-cols-2 gap-2">
+                <a className="btn-secondary" href={dl("cv", "pdf")}><Icon name="download" className="size-4" />CV PDF</a>
+                <a className="btn-secondary" href={dl("cv", "docx")}>CV Word</a>
+                <a className="btn-secondary" href={dl("letter", "pdf")}><Icon name="download" className="size-4" />Lettera PDF</a>
+                <a className="btn-secondary" href={dl("letter", "docx")}>Lettera Word</a>
+              </div>
+              {t &&
+                (t.corrections.length > 0 ? (
+                  <details className="text-xs">
+                    <summary className="cursor-pointer text-signal">
+                      {t.corrections.length} correzioni anti-invenzione applicate
+                    </summary>
+                    <ul className="mt-1 list-disc space-y-0.5 pl-5 text-muted">
+                      {t.corrections.map((c, i) => (
+                        <li key={i}>{c}</li>
+                      ))}
+                    </ul>
+                  </details>
+                ) : (
+                  <p className="text-xs text-good">Controllo anti-invenzione: nessuna correzione necessaria</p>
+                ))}
+              {t && <LetterBox letter={t.letter} />}
             </div>
           )}
 
           {detail ? (
             <details>
               <summary className="cursor-pointer font-semibold">Testo dell&apos;annuncio</summary>
-              <p className="mt-2 whitespace-pre-line text-slate-700 dark:text-slate-300">{detail.job.description}</p>
+              <p className="mt-2 whitespace-pre-line leading-relaxed text-slate-300">{detail.job.description}</p>
             </details>
           ) : (
-            <p className="text-slate-400">Caricamento…</p>
+            <p className="text-muted">Caricamento…</p>
           )}
         </div>
       )}
@@ -349,18 +569,21 @@ function JobCard({ job, onRemove, onChange }: { job: JobRow; onRemove: (id: stri
   );
 }
 
-function List({ title, items, tone }: { title: string; items: string[]; tone: string }) {
+function List({ title, items, dot }: { title: string; items: string[]; dot: string }) {
   return (
     <div>
-      <h4 className={`mb-1 text-xs font-semibold uppercase ${tone}`}>{title}</h4>
+      <h4 className="mb-1.5 flex items-center gap-1.5 text-[13px] font-semibold">
+        <span className={`size-2 rounded-full ${dot}`} aria-hidden="true" />
+        {title}
+      </h4>
       {items.length ? (
-        <ul className="list-disc space-y-0.5 pl-4">
+        <ul className="space-y-1 text-slate-300">
           {items.map((s, i) => (
             <li key={i}>{s}</li>
           ))}
         </ul>
       ) : (
-        <p className="text-slate-400">—</p>
+        <p className="text-muted">Nessuno</p>
       )}
     </div>
   );
@@ -371,19 +594,20 @@ function LetterBox({ letter }: { letter: string }) {
   return (
     <div>
       <div className="mb-1 flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase text-slate-500">Lettera</span>
+        <span className="text-[13px] font-medium text-muted">Lettera</span>
         <button
-          className="btn-ghost text-xs"
+          className="btn-ghost min-h-9 px-2 text-xs"
           onClick={async () => {
             await navigator.clipboard.writeText(letter);
             setCopied(true);
             setTimeout(() => setCopied(false), 1500);
           }}
         >
-          {copied ? "Copiata ✓" : "📋 Copia testo"}
+          <Icon name={copied ? "check" : "copy"} className="size-3.5" />
+          {copied ? "Copiata" : "Copia testo"}
         </button>
       </div>
-      <textarea readOnly className="input h-48 font-serif text-[13px]" value={letter} />
+      <textarea readOnly className="input h-48 font-serif text-[15px] leading-relaxed" value={letter} />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { RadarMark } from "@/components/Icon";
 
 function LoginForm() {
   const params = useSearchParams();
@@ -28,11 +29,11 @@ function LoginForm() {
   }
 
   return (
-    <form onSubmit={submit} className="card mx-auto mt-16 max-w-sm space-y-4">
-      <div className="text-center">
-        <div className="text-4xl">📡</div>
-        <h1 className="mt-2 text-xl font-bold">JobRadar</h1>
-        <p className="text-sm text-slate-500">Area privata: inserisci la password</p>
+    <form onSubmit={submit} className="pt-safe mx-auto mt-[12vh] max-w-sm space-y-5">
+      <div>
+        <RadarMark className="size-14" />
+        <h1 className="mt-4 text-[32px] font-semibold leading-tight tracking-tight">JobRadar</h1>
+        <p className="text-muted">Area privata. Inserisci la password per entrare.</p>
       </div>
       <input
         type="password"
@@ -43,7 +44,7 @@ function LoginForm() {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-bad">{error}</p>}
       <button className="btn-primary w-full" disabled={busy || !password}>
         {busy ? "Accesso…" : "Entra"}
       </button>

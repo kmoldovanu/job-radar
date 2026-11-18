@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ErrorBox } from "@/components/ui";
+import { ErrorBox, PageHeader } from "@/components/ui";
 import { api } from "@/lib/client";
 import { emptyProfile, LANGUAGE_LEVELS, type Profile } from "@/lib/types";
 
@@ -82,13 +82,13 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Profilo</h1>
+      <PageHeader title="Profilo" subtitle="Il tuo CV master e cosa cerchi" />
 
       <div className="card space-y-2">
-        <h2 className="font-semibold">{exists ? "Ricarica il CV" : "1. Carica il tuo CV"}</h2>
-        <p className="text-sm text-slate-500">PDF o Word (.docx). L&apos;AI lo trasforma nel tuo CV master, che puoi modificare.</p>
+        <h2 className="text-lg font-semibold">{exists ? "Ricarica il CV" : "1. Carica il tuo CV"}</h2>
+        <p className="text-sm text-muted">PDF o Word (.docx). L&apos;AI lo trasforma nel tuo CV master, che puoi modificare.</p>
         <label className="btn-primary cursor-pointer">
-          {busy === "upload" ? "Lettura in corso…" : "📄 Scegli file"}
+          {busy === "upload" ? "Lettura in corso…" : "Scegli il file del CV"}
           <input
             type="file"
             accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -97,14 +97,14 @@ export default function ProfilePage() {
             onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])}
           />
         </label>
-        {exists && <p className="text-xs text-amber-700">Ricaricando il CV i dati qui sotto verranno sostituiti (le preferenze di ricerca restano).</p>}
+        {exists && <p className="text-sm text-signal">Ricaricando il CV i dati qui sotto verranno sostituiti (le preferenze di ricerca restano).</p>}
       </div>
 
-      {msg && <p className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">{msg}</p>}
+      {msg && <p className="rounded-xl border border-good/40 bg-good/10 p-3 text-sm text-good">{msg}</p>}
       <ErrorBox error={err} />
 
       <section className="card space-y-3">
-        <h2 className="font-semibold">Cosa cerchi</h2>
+        <h2 className="text-lg font-semibold">Cosa cerchi</h2>
         <Field label="Ruoli che cerchi (separati da virgola, in inglese funzionano meglio)">
           <TextList value={p.preferences.targetRoles} onChange={(v) => pref({ targetRoles: v })} placeholder="Data Analyst, Business Analyst" />
         </Field>
@@ -135,7 +135,7 @@ export default function ProfilePage() {
             ).map(([k, l]) => (
               <label key={k} className="flex items-center gap-1.5">
                 <input
-                  type="checkbox"
+                  type="checkbox" className="size-5 accent-[#f4b740]"
                   checked={p.preferences.workModes.includes(k)}
                   onChange={(e) =>
                     pref({ workModes: e.target.checked ? [...p.preferences.workModes, k] : p.preferences.workModes.filter((x) => x !== k) })
@@ -147,13 +147,13 @@ export default function ProfilePage() {
           </div>
         </Field>
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={p.preferences.willingToRelocate} onChange={(e) => pref({ willingToRelocate: e.target.checked })} />
+          <input type="checkbox" className="size-5 accent-[#f4b740]" checked={p.preferences.willingToRelocate} onChange={(e) => pref({ willingToRelocate: e.target.checked })} />
           Sono disponibile a trasferirmi all&apos;estero
         </label>
       </section>
 
       <section className="card space-y-3">
-        <h2 className="font-semibold">Dati personali</h2>
+        <h2 className="text-lg font-semibold">Dati personali</h2>
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Nome">
             <input className="input" value={p.name} onChange={(e) => up({ name: e.target.value })} />
@@ -180,8 +180,8 @@ export default function ProfilePage() {
       </section>
 
       <section className="card space-y-3">
-        <h2 className="font-semibold">Lingue</h2>
-        <p className="text-xs text-slate-500">Servono a scartare le offerte che richiedono lingue che non parli almeno a livello B2.</p>
+        <h2 className="text-lg font-semibold">Lingue</h2>
+        <p className="text-sm text-muted">Servono a scartare le offerte che richiedono lingue che non parli almeno a livello B2.</p>
         {p.languages.map((l, i) => (
           <div key={i} className="flex gap-2">
             <input
@@ -221,7 +221,7 @@ export default function ProfilePage() {
       </section>
 
       <section className="card space-y-3">
-        <h2 className="font-semibold">Competenze e certificazioni</h2>
+        <h2 className="text-lg font-semibold">Competenze e certificazioni</h2>
         <Field label="Competenze (separate da virgola)">
           <TextList value={p.skills} onChange={(v) => up({ skills: v })} area />
         </Field>
@@ -231,7 +231,7 @@ export default function ProfilePage() {
       </section>
 
       <section className="card space-y-3">
-        <h2 className="font-semibold">Esperienze</h2>
+        <h2 className="text-lg font-semibold">Esperienze</h2>
         {p.experience.map((x, i) => {
           const set = (patch: Partial<typeof x>) => up({ experience: p.experience.map((e, j) => (j === i ? { ...e, ...patch } : e)) });
           return (
@@ -244,7 +244,7 @@ export default function ProfilePage() {
               </div>
               <input className="input" placeholder="Località" value={x.location} onChange={(e) => set({ location: e.target.value })} />
               <Lines value={x.bullets} onChange={(v) => set({ bullets: v })} placeholder="Un risultato o attività per riga" />
-              <button className="btn-ghost text-xs text-red-600" onClick={() => up({ experience: p.experience.filter((_, j) => j !== i) })}>
+              <button className="btn-ghost text-xs text-bad" onClick={() => up({ experience: p.experience.filter((_, j) => j !== i) })}>
                 Elimina esperienza
               </button>
             </div>
@@ -256,7 +256,7 @@ export default function ProfilePage() {
       </section>
 
       <section className="card space-y-3">
-        <h2 className="font-semibold">Formazione</h2>
+        <h2 className="text-lg font-semibold">Formazione</h2>
         {p.education.map((x, i) => {
           const set = (patch: Partial<typeof x>) => up({ education: p.education.map((e, j) => (j === i ? { ...e, ...patch } : e)) });
           return (
@@ -268,7 +268,7 @@ export default function ProfilePage() {
                 <input className="input" placeholder="Fine" value={x.end} onChange={(e) => set({ end: e.target.value })} />
               </div>
               <input className="input" placeholder="Dettagli (voto, tesi…)" value={x.details} onChange={(e) => set({ details: e.target.value })} />
-              <button className="btn-ghost text-xs text-red-600" onClick={() => up({ education: p.education.filter((_, j) => j !== i) })}>
+              <button className="btn-ghost text-xs text-bad" onClick={() => up({ education: p.education.filter((_, j) => j !== i) })}>
                 Elimina
               </button>
             </div>
@@ -280,7 +280,7 @@ export default function ProfilePage() {
       </section>
 
       <section className="card space-y-3">
-        <h2 className="font-semibold">Progetti</h2>
+        <h2 className="text-lg font-semibold">Progetti</h2>
         {p.projects.map((x, i) => {
           const set = (patch: Partial<typeof x>) => up({ projects: p.projects.map((e, j) => (j === i ? { ...e, ...patch } : e)) });
           return (
@@ -288,7 +288,7 @@ export default function ProfilePage() {
               <input className="input" placeholder="Nome progetto" value={x.name} onChange={(e) => set({ name: e.target.value })} />
               <input className="input" placeholder="Descrizione" value={x.description} onChange={(e) => set({ description: e.target.value })} />
               <Lines value={x.bullets} onChange={(v) => set({ bullets: v })} placeholder="Punti elenco, uno per riga" />
-              <button className="btn-ghost text-xs text-red-600" onClick={() => up({ projects: p.projects.filter((_, j) => j !== i) })}>
+              <button className="btn-ghost text-xs text-bad" onClick={() => up({ projects: p.projects.filter((_, j) => j !== i) })}>
                 Elimina
               </button>
             </div>
@@ -301,7 +301,7 @@ export default function ProfilePage() {
 
       <div className="sticky bottom-20 z-10 md:bottom-4">
         <button className="btn-primary w-full py-3 text-base shadow-lg" disabled={!!busy} onClick={save}>
-          {busy === "save" ? "Salvataggio…" : "💾 Salva profilo"}
+          {busy === "save" ? "Salvataggio…" : "Salva profilo"}
         </button>
       </div>
     </div>

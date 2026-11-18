@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ErrorBox } from "@/components/ui";
+import { ErrorBox, PageHeader } from "@/components/ui";
 import { api } from "@/lib/client";
 import { ADZUNA_COUNTRIES, type Settings } from "@/lib/types";
 
@@ -76,26 +76,26 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Impostazioni</h1>
+      <PageHeader title="Impostazioni" />
 
       <section className="card space-y-2">
-        <h2 className="font-semibold">Fonti attive</h2>
+        <h2 className="text-lg font-semibold">Fonti attive</h2>
         {SOURCES.map(([k, name, desc]) => (
-          <label key={k} className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={s.sources[k]} onChange={(e) => setS({ ...s, sources: { ...s.sources, [k]: e.target.checked } })} />
-            <b>{name}</b> <span className="text-slate-500">— {desc}</span>
+          <label key={k} className="flex min-h-10 items-center gap-3 text-[15px]">
+            <input type="checkbox" className="size-5 accent-[#f4b740]" checked={s.sources[k]} onChange={(e) => setS({ ...s, sources: { ...s.sources, [k]: e.target.checked } })} />
+            <span><b className="font-medium">{name}</b> <span className="text-muted">{desc}</span></span>
           </label>
         ))}
       </section>
 
       <section className="card space-y-2">
-        <h2 className="font-semibold">Paesi Adzuna</h2>
-        <p className="text-xs text-slate-500">Una richiesta per paese. Fuori dall&apos;UE/SEE/Svizzera restano solo le offerte che parlano di sponsor del visto.</p>
+        <h2 className="text-lg font-semibold">Paesi Adzuna</h2>
+        <p className="text-sm text-muted">Una richiesta per paese. Fuori dall&apos;UE/SEE/Svizzera restano solo le offerte che parlano di sponsor del visto.</p>
         <div className="grid grid-cols-2 gap-1 text-sm sm:grid-cols-3">
           {ADZUNA_COUNTRIES.map((c) => (
             <label key={c} className="flex items-center gap-2">
               <input
-                type="checkbox"
+                type="checkbox" className="size-5 accent-[#f4b740]"
                 checked={s.adzunaCountries.includes(c)}
                 onChange={(e) =>
                   setS({ ...s, adzunaCountries: e.target.checked ? [...s.adzunaCountries, c] : s.adzunaCountries.filter((x) => x !== c) })
@@ -108,8 +108,8 @@ export default function SettingsPage() {
       </section>
 
       <section className="card space-y-2">
-        <h2 className="font-semibold">Località Jooble</h2>
-        <p className="text-xs text-slate-500">
+        <h2 className="text-lg font-semibold">Località Jooble</h2>
+        <p className="text-sm text-muted">
           Una richiesta per località a ogni ricerca, con il primo ruolo del profilo. La chiave gratuita di Jooble ha un numero
           limitato di richieste: meglio poche località (es. Remote, Italy, Germany).
         </p>
@@ -117,7 +117,7 @@ export default function SettingsPage() {
       </section>
 
       <section className="card grid grid-cols-2 gap-3">
-        <h2 className="col-span-2 font-semibold">Soglie</h2>
+        <h2 className="col-span-2 text-lg font-semibold">Soglie</h2>
         <NumField label="Età massima annunci (giorni)" value={s.maxAgeDays} onChange={num("maxAgeDays")} />
         <NumField label="Match rapido minimo (0-100)" value={s.minQuickScore} onChange={num("minQuickScore")} />
         <NumField label="Offerte da valutare con AI" value={s.aiEvaluateTop} onChange={num("aiEvaluateTop")} />
@@ -126,7 +126,7 @@ export default function SettingsPage() {
       </section>
 
       <section className="card space-y-3">
-        <h2 className="font-semibold">Modelli AI</h2>
+        <h2 className="text-lg font-semibold">Modelli AI</h2>
         <label className="block">
           <span className="label">Modello veloce (valutazione)</span>
           <input className="input font-mono" value={s.evalModel} onChange={(e) => setS({ ...s, evalModel: e.target.value.trim() })} />
@@ -138,24 +138,24 @@ export default function SettingsPage() {
       </section>
 
       <button className="btn-primary w-full py-3" disabled={busy} onClick={save}>
-        {busy ? "Salvataggio…" : "💾 Salva impostazioni"}
+        {busy ? "Salvataggio…" : "Salva impostazioni"}
       </button>
-      {msg && <p className="text-sm text-emerald-700">{msg}</p>}
+      {msg && <p className="text-sm text-good">{msg}</p>}
       <ErrorBox error={err} />
 
       <section className="card space-y-2">
-        <h2 className="font-semibold">Variabili d&apos;ambiente</h2>
+        <h2 className="text-lg font-semibold">Variabili d&apos;ambiente</h2>
         <ul className="space-y-1 text-sm">
           {Object.entries(env).map(([k, v]) => (
             <li key={k} className="flex items-start gap-2">
-              <span>{v ? "✅" : "❌"}</span>
+              <span className={`mt-1.5 size-2 shrink-0 rounded-full ${v ? "bg-good" : "bg-bad"}`} aria-label={v ? "impostata" : "mancante"} />
               <span>
-                <code className="font-mono text-xs">{k}</code> <span className="text-slate-500">— {ENV_HELP[k]}</span>
+                <code className="font-mono text-xs">{k}</code> <span className="text-muted">{ENV_HELP[k]}</span>
               </span>
             </li>
           ))}
         </ul>
-        <p className="text-xs text-slate-500">I valori non vengono mai mostrati. Si impostano su Vercel → Settings → Environment Variables.</p>
+        <p className="text-sm text-muted">I valori non vengono mai mostrati. Si impostano su Vercel → Settings → Environment Variables.</p>
       </section>
 
       <button className="btn-secondary w-full" onClick={logout}>

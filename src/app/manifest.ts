@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Offerte di lavoro, CV su misura e tracker delle candidature",
     start_url: "/",
     display: "standalone",
-    background_color: "#f8fafc",
-    theme_color: "#1f57c9",
+    background_color: "#0c1520",
+    theme_color: "#0c1520",
     lang: "it",
     icons: [
       { src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Empty, ErrorBox, ViaSource } from "@/components/ui";
+import { Icon } from "@/components/Icon";
+import { Empty, ErrorBox, PageHeader, Pill, ViaSource } from "@/components/ui";
 import { api, daysAgo, fmtDate } from "@/lib/client";
 import { APPLICATION_STATUSES, type ApplicationStatus } from "@/lib/types";
 
@@ -24,10 +25,10 @@ interface App {
 }
 
 const STATUS_STYLE: Record<ApplicationStatus, string> = {
-  inviata: "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-200",
-  colloquio: "bg-violet-100 text-violet-800 dark:bg-violet-950 dark:text-violet-200",
-  offerta: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200",
-  rifiutato: "bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
+  inviata: "bg-sky/15 text-sky",
+  colloquio: "bg-signal/15 text-signal",
+  offerta: "bg-good/15 text-good",
+  rifiutato: "bg-panel-2 text-muted",
 };
 
 export default function ApplicationsPage() {
@@ -67,21 +68,22 @@ export default function ApplicationsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-end justify-between gap-2">
-        <div>
-          <h1 className="text-2xl font-bold">Candidature</h1>
-          <p className="text-sm text-slate-500">{apps ? `${apps.length} candidature inviate` : "Caricamento…"}</p>
-        </div>
-        <a className="btn-secondary" href="/api/applications/export">
-          ⬇ Esporta CSV
-        </a>
-      </div>
+      <PageHeader
+        title="Candidature"
+        subtitle={apps ? `${apps.length} candidature inviate` : "Caricamento…"}
+        action={
+          <a className="btn-secondary" href="/api/applications/export">
+            <Icon name="download" className="size-4" />
+            CSV
+          </a>
+        }
+      />
       <ErrorBox error={error} />
 
       {due.length > 0 && (
-        <div className="card border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950">
-          <h2 className="font-semibold">⏰ Follow-up da fare ({due.length})</h2>
-          <p className="text-sm text-slate-600 dark:text-slate-300">
+        <div className="card border-signal/40">
+          <h2 className="text-lg font-semibold text-signal">Follow-up da fare ({due.length})</h2>
+          <p className="text-sm text-muted">
             Nessuna risposta dopo qualche giorno: scrivi un breve messaggio di follow-up al recruiter.
           </p>
           <ul className="mt-2 space-y-1 text-sm">
@@ -100,35 +102,35 @@ export default function ApplicationsPage() {
       )}
 
       {apps && apps.length > 0 && (
-        <div className="flex flex-wrap gap-1 text-sm">
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
           {(["tutte", ...APPLICATION_STATUSES] as const).map((s) => (
-            <button key={s} onClick={() => setFilter(s)} className={`rounded-full px-3 py-1 capitalize ${filter === s ? "bg-brand-600 text-white" : "bg-slate-100 dark:bg-slate-800"}`}>
-              {s} {s === "tutte" ? apps.length : (counts[s] ?? 0)}
-            </button>
+            <Pill key={s} on={filter === s} onClick={() => setFilter(s)}>
+              <span className="capitalize">{s}</span> <span className="tabular-nums opacity-70">{s === "tutte" ? apps.length : (counts[s] ?? 0)}</span>
+            </Pill>
           ))}
         </div>
       )}
 
-      {apps && apps.length === 0 && !error && <Empty>Non hai ancora segnato nessuna candidatura. Premi “✅ Candidato!” su un&apos;offerta.</Empty>}
+      {apps && apps.length === 0 && !error && <Empty>Non hai ancora segnato nessuna candidatura. Premi “Candidato” su un&apos;offerta.</Empty>}
 
       <div className="space-y-3">
         {visible.map((a) => (
           <article key={a.id} className="card space-y-2">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <h2 className="font-semibold leading-snug">{a.title}</h2>
+                <h2 className="text-[17px] font-semibold leading-snug">{a.title}</h2>
                 <p className="text-sm text-slate-600 dark:text-slate-300">
                   {a.company}
                   {a.location ? ` · ${a.location}` : ""}
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="mt-1 text-xs text-muted">
                   Inviata il {fmtDate(a.appliedAt)} ({daysAgo(a.appliedAt)}) · <ViaSource source={a.source} url={a.sourceUrl} />
                 </p>
               </div>
               <select
                 value={a.status}
                 onChange={(e) => patch(a.id, { status: e.target.value as ApplicationStatus })}
-                className={`rounded-lg border-0 px-2 py-1 text-sm font-medium capitalize ${STATUS_STYLE[a.status]}`}
+                className={`min-h-9 rounded-lg border-0 px-2 text-sm font-medium capitalize ${STATUS_STYLE[a.status]}`}
               >
                 {APPLICATION_STATUSES.map((s) => (
                   <option key={s} value={s}>
@@ -139,22 +141,23 @@ export default function ApplicationsPage() {
             </div>
             <div className="flex flex-wrap gap-2 text-sm">
               <a className="btn-secondary" href={a.url} target="_blank" rel="noopener noreferrer">
-                ↗ Annuncio
+                <Icon name="external" className="size-4" />
+                Annuncio
               </a>
               {a.tailoredId ? (
                 <>
                   <a className="btn-secondary" href={`/api/jobs/${encodeURIComponent(a.jobId)}/download?doc=cv&format=pdf&tid=${a.tailoredId}`}>
-                    📄 CV usato ({a.cvLanguage?.toUpperCase()})
+                    CV usato ({a.cvLanguage?.toUpperCase()})
                   </a>
                   <a className="btn-secondary" href={`/api/jobs/${encodeURIComponent(a.jobId)}/download?doc=letter&format=pdf&tid=${a.tailoredId}`}>
-                    ✉️ Lettera
+                    Lettera
                   </a>
                 </>
               ) : (
                 <span className="chip">CV master</span>
               )}
               {a.followUpAt && a.status === "inviata" && (
-                <span className={`chip ${a.followUpDone ? "" : new Date(a.followUpAt).getTime() <= now ? "bg-amber-100 text-amber-800" : ""}`}>
+                <span className={`chip ${a.followUpDone ? "" : new Date(a.followUpAt).getTime() <= now ? "border-signal/50 text-signal" : ""}`}>
                   {a.followUpDone ? "Follow-up fatto ✓" : `Follow-up: ${fmtDate(a.followUpAt)}`}
                 </span>
               )}

@@ -42,6 +42,8 @@ export const jobs = pgTable(
     aiEval: jsonb("ai_eval").$type<AiEvaluation>(),
     /** new | applied | dismissed */
     status: text("status").notNull().default("new"),
+    /** quando l'hai aperta/guardata (null = ancora da vedere) */
+    seenAt: timestamp("seen_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
   },

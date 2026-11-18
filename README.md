@@ -5,8 +5,8 @@ Web app personale per cercare lavoro in tutto il mondo (remoto, Europa e oltre),
 ## Cosa fa
 
 1. **Profilo**: carichi il tuo CV (PDF o Word) → l'AI lo trasforma in un *CV master* strutturato che puoi correggere. Qui indichi anche ruoli cercati, parole da escludere, modalità (remoto/ibrido/in sede), disponibilità a trasferirti, lingue con livello.
-2. **Cerca ora**: interroga in parallelo tutte le fonti attive, una richiesta per fonte (o per paese/azienda), elimina i duplicati, scarta le offerte senza chance concrete e valuta le migliori 40 con l'AI. Alla fine vedi quante offerte sono state scartate e perché.
-3. **Offerte**: ordinate per punteggio. *Prepara N candidature* genera in blocco CV + lettera su misura per le migliori N. Su ogni offerta: *Apri annuncio*, download CV/lettera in PDF e Word, *✅ Candidato!* (va nel tracker con la data), *Non mi interessa* (sparisce per sempre).
+2. **Cerca**: mostra cosa stai cercando (ruoli, modalità, livello, fonti) e ti fa scegliere chi dà il punteggio: *solo punteggio rapido*, *AI sulle migliori N* (predefinito) o *AI su tutte le nuove* (max 100). Poi interroga in parallelo tutte le fonti attive, una richiesta per fonte (o per paese/azienda), elimina i duplicati, scarta le offerte senza chance concrete e assegna il punteggio come scelto. Alla fine vedi quante offerte sono state scartate e perché.
+3. **Offerte**: schede *Da vedere* (mai aperte, con il badge "Nuova"), *Viste*, *Tutte* e *Scartate* (con *Ripristina*); ordinamento per punteggio o per data di arrivo. Un'offerta diventa "Vista" quando apri i dettagli o l'annuncio, oppure con il pulsante a forma di occhio (che la riporta anche tra le "Da vedere"); *Segna tutte come viste* svuota la lista. *Prepara N candidature* genera in blocco CV + lettera su misura per le migliori N. Su ogni offerta: *Apri annuncio*, download CV/lettera in PDF e Word, *Candidato* (va nel tracker con la data), *Non mi interessa* (va tra le Scartate, con Annulla subito e Ripristina dopo).
 4. **Candidature**: stato (inviata, colloquio, offerta, rifiutato), note, CV usato, promemoria di follow-up dopo 10 giorni, export CSV.
 
 ### Fonti (solo API pubbliche e ufficiali)

@@ -244,6 +244,8 @@ export const settingsSchema = z.object({
   maxAgeDays: z.number().int().min(1).max(90).default(21),
   minQuickScore: z.number().int().min(0).max(100).default(25),
   aiEvaluateTop: z.number().int().min(0).max(100).default(40),
+  /** valutazione AI dopo ogni ricerca: off = solo punteggio rapido, top = le migliori N, all = tutte le nuove (max 100) */
+  autoEvaluate: z.enum(["off", "top", "all"]).default("top"),
   prepareCount: z.number().int().min(1).max(30).default(5),
   followUpDays: z.number().int().min(1).max(60).default(10),
   evalModel: z.string().default("claude-haiku-5-5"),
