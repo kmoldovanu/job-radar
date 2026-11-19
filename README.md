@@ -151,7 +151,7 @@ Per attivarla:
 - **Mai sovrascrivere**: una nuova ricerca non ripropone né modifica offerte a cui ti sei candidato o che hai scartato. Lo stesso annuncio trovato su più fonti viene salvato una volta sola (chiave azienda + titolo).
 - Ogni fonte è un modulo in `src/lib/sources/` con una funzione `parse()` pura e testata; tutto viene normalizzato nel tipo `Job` (`src/lib/types.ts`).
 - I filtri sono in `src/lib/filters/`, il controllo anti-invenzioni in `src/lib/ai/guard.ts`.
-- **Stile**: chiaro, descritto in `DESIGN.md` (prodotto in `PRODUCT.md`): fondo bianco, un solo accento corallo, Geist e Geist Mono, bottoni neri a pillola, match come "81% MATCH" (corallo = AI, tratteggiato = stima dal CV).
+- **Stile**: scuro, descritto in `DESIGN.md` (prodotto in `PRODUCT.md`): fondo nero, un solo accento corallo, Geist e Geist Mono, bottoni a pillola, match grande con barra ("Match AI" o "Stima CV") e spiegato nei dettagli. Animazioni con **Motion** (`motion/react`, `src/components/motion.tsx`), disattivate con "riduci movimento".
 
 ## Struttura
 

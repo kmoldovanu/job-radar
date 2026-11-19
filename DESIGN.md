@@ -1,23 +1,24 @@
 ---
 name: JobRadar
-description: Personal job-search PWA, light and calm, one coral accent.
+description: Personal job-search PWA, dark and calm, one coral accent, quiet motion.
 colors:
-  white: "#ffffff"
-  rail: "#f7f7f6"
-  panel-2: "#f3f3f2"
-  line: "#ebebea"
-  line-strong: "#dcdcda"
-  cream: "#f4ecdc"
-  ink: "#0a0a0a"
-  muted: "#5f5f5f"
-  faint: "#767676"
-  coral: "#d9381e"
-  coral-mark: "#e5432a"
-  good: "#15803d"
-  amber: "#b45309"
-  bad: "#b91c1c"
-  sky: "#2563eb"
-  violet: "#6d28d9"
+  black: "#000000"
+  rail: "#0c0c0c"
+  panel: "#111111"
+  panel-2: "#1c1c1c"
+  line: "#222222"
+  line-strong: "#333333"
+  hover: "#444444"
+  cream: "#1a1510"
+  ink: "#ededed"
+  muted: "#a3a3a3"
+  faint: "#8b8b8b"
+  coral: "#ff5c3d"
+  good: "#4ade80"
+  amber: "#fbbf24"
+  bad: "#f87171"
+  sky: "#60a5fa"
+  violet: "#a78bfa"
 typography:
   page-title:
     fontFamily: "Geist, ui-sans-serif, system-ui, sans-serif"
@@ -57,6 +58,12 @@ typography:
     fontSize: "13px"
     fontWeight: 500
     lineHeight: 1.4
+  match-number:
+    fontFamily: "Geist, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "30px"
+    fontWeight: 600
+    lineHeight: 1
+    letterSpacing: "-0.04em"
   mono:
     fontFamily: "Geist Mono, ui-monospace, monospace"
     fontSize: "11px"
@@ -76,42 +83,41 @@ spacing:
 components:
   button-primary:
     backgroundColor: "{colors.ink}"
-    textColor: "{colors.white}"
+    textColor: "{colors.black}"
     rounded: "{rounded.control}"
     height: "40px"
     padding: "0 16px"
   button-primary-hover:
-    backgroundColor: "#2a2a2a"
+    backgroundColor: "#ffffff"
   button-secondary:
-    backgroundColor: "{colors.white}"
+    backgroundColor: "{colors.panel}"
     textColor: "{colors.ink}"
     rounded: "{rounded.control}"
     height: "40px"
     padding: "0 16px"
   input:
-    backgroundColor: "{colors.white}"
+    backgroundColor: "{colors.rail}"
     textColor: "{colors.ink}"
     rounded: "{rounded.field}"
     padding: "10px 12px"
   card:
-    backgroundColor: "{colors.white}"
+    backgroundColor: "{colors.panel}"
     rounded: "{rounded.card}"
     padding: "16px"
   chip:
-    backgroundColor: "{colors.white}"
-    textColor: "#3d3d3d"
+    backgroundColor: "{colors.panel}"
+    textColor: "#d4d4d4"
     rounded: "{rounded.control}"
     padding: "2px 10px"
   filter-pill-on:
     backgroundColor: "{colors.ink}"
-    textColor: "{colors.white}"
+    textColor: "{colors.black}"
     rounded: "{rounded.control}"
     height: "32px"
-  match-tag:
+  match-meter:
     textColor: "{colors.coral}"
-    typography: "{typography.mono}"
-    rounded: "{rounded.control}"
-    padding: "2px 8px"
+    typography: "{typography.match-number}"
+    width: "72px"
   summary-panel:
     backgroundColor: "{colors.cream}"
     rounded: "{rounded.card}"
@@ -122,24 +128,24 @@ components:
 
 ## Overview
 
-**Creative North Star: "Il punto sul radar"**
+**Creative North Star: "Il punto sul radar, di notte"**
 
-A calm, light working tool. White ground, near-black ink, and one coral that always means "this matters": a new offer, a strong match, the live dot. Text is Geist; data and status speak in small, tracked Geist Mono. Controls are black or outlined pills. The owner chose this language from a reference site (www.job-radar.io) after rejecting a dark, multi-colour "transit line" direction as heavy: the lesson is restraint.
+A calm, dark working tool. True black ground, light ink, and one coral that always means "this matters": a new offer, a strong match, the live dot, the radar sweep. Text is Geist; data and status speak in small, tracked Geist Mono. Controls are light or outlined pills. The language comes from the owner's reference (www.job-radar.io) and its dark section; the owner first rejected a heavy multi-colour "transit" look, then asked for this style in dark with a clearer match and more motion.
 
 **Key Characteristics:**
-- Light always: white ground, hairline borders, cream only for summary panels.
+- Dark always: black page, #111 cards, hairline borders, warm-black panels for summaries.
 - One accent, coral, used for meaning, never decoration.
-- Mono for data (match %, dates, sources, statuses), sans for everything people read.
-- Black pill for the one primary action per area.
+- The match is the loudest number on a card: big, with a bar and what it is.
+- Motion answers actions (tabs, dismiss, expand) plus one ambient element, the radar sweep.
 
 ## Colors
 
 ### Primary
-- **Coral** (`coral`, #d9381e for text, `coral-mark` #e5432a for dots and rings): new offers, the live dot, strong AI match (≥ 70), the active nav dot, the caret.
+- **Coral** (`coral`, #ff5c3d, 6.9:1 on black): new offers, the live dot, strong AI match (≥ 70), the radar rings and sweep, the active mobile tab dot, the caret.
 
 ### Neutral
-- `white` ground and cards, `rail` for wells (tailored CV box), `panel-2` for tab tracks and hover, `line` / `line-strong` hairlines and control borders, `cream` for summary panels (evaluation report, follow-ups, search result).
-- Text: `ink` primary, `muted` secondary (6.4:1), `faint` tertiary and mono meta (4.5:1).
+- `black` page, `rail` fields and wells, `panel` cards, `panel-2` tab track and chips, `line` / `line-strong` / `hover` borders by emphasis, `cream` (warm black) for summary panels.
+- Text: `ink` primary, `muted` secondary (8.3:1), `faint` tertiary and mono meta (6.2:1).
 
 ### State dots
 - Small dots only, never fills: `good` chance alta / offerta, `amber` chance media / notes, `bad` chance bassa / rifiutato, `sky` inviata, `violet` colloquio.
@@ -152,54 +158,62 @@ A calm, light working tool. White ground, near-black ink, and one coral that alw
 Geist for all reading text; Geist Mono for data and status at 11px, uppercase, 0.1em tracking.
 
 ### Hierarchy
-- Page title 28px (34px from `sm`) / 600 / -0.03em; card title 17px / 600; section title 18px / 600; body 15px; controls 14px / 500; labels 13px / 500; mono 11px.
+- Page title 28px (34px from `sm`) / 600 / -0.03em; match number 30px (34px from `sm`) / 600 / -0.04em; card title 17px / 600; section title 18px / 600; body 15px; controls 14px / 500; labels 13px / 500; mono 11px.
 
 ### Named Rules
 **The Mono Is Data Rule.** Mono carries numbers, dates, sources and statuses. It never sits above a heading as an eyebrow.
 
 ## Layout
 
-Single column, max width 896px, 16px gutter. Desktop: a floating white pill nav (border + soft shadow) with the active section in a black pill. Mobile: white top bar, white bottom tab bar with a coral dot on the active icon. Cards stack with 12px gaps; inside a card, 14px between groups.
+Single column, max width 896px, 16px gutter. Desktop: a floating dark pill nav (border + deep shadow) with the active section in a light pill that slides. Mobile: black top bar, black bottom tab bar with a coral dot that slides to the active icon. Cards stack with 12px gaps.
 
 ## Elevation & Depth
 
-Flat by default: hairline borders. Shadows only on things that float or invite a click: the desktop nav, the active tab, card hover (0 8px 24px -16px), the toast, the sticky save button.
+Flat by default: hairline borders on #111 cards over black. Shadows only on what floats: the desktop nav, card hover (0 16px 40px -24px black), the toast, the sticky save button.
 
 ## Shapes
 
 Pills for every control, chip and tag; 12px for fields; 16px for cards and panels.
 
+## Motion
+
+Motion library (`motion/react`) with `LazyMotion` + `domMax` and `MotionConfig reducedMotion="user"` (src/components/motion.tsx); CSS keyframes for the radar.
+- **Spring** (stiffness 420, damping 36): tab pill, nav pill, tab dot, card enter, toast.
+- **Card list:** enters with a short stagger (45ms per card, max 8); dismiss/apply exits left in 180ms and the rest close the gap (`layout="position"`, `AnimatePresence mode="popLayout"`).
+- **Details:** expand/collapse on height with the spring.
+- **Match:** number counts up over 0.9s and the bar fills (ease-out expo), once.
+- **Ambient:** radar sweep on the Offerte header, 9s per turn; the live dot pings. Both stop under reduced motion.
+
 ## Components
 
 ### Buttons
-Primary black pill with white text; secondary white pill with `line-strong` border; ghost text-only; icon buttons 40px circles. "Candidato" uses the primary.
+Primary light pill (ink) with black text; secondary dark pill with `line-strong` border; ghost text-only; icon buttons 40px circles.
 
 ### Chips
 Outlined pills. A chip outlined in ink is the strongest item (matched CV title, central skill filled ink).
 
 ### Cards / Containers
-White, 1px `line`, 16px radius, 16–20px padding. Summary panels are cream with no border.
+#111, 1px `line`, 16px radius, 16–20px padding. Summary panels are warm black (`cream`) with no border.
 
 ### Inputs / Fields
-White, `line-strong` border, ink border plus a 3px soft ring on focus, coral caret, 16px text.
+`rail` fill, `line-strong` border, ink border plus a soft white ring on focus, coral caret, 16px text.
 
-### Navigation
-See Layout. The radar mark: grey rings, coral sweep and blip, ink centre.
+### Match Meter (signature)
+Top right of every offer: the score as a big number with "%", a 4px bar that fills to the score, and a mono caption, "Match AI" or "Stima CV". Coral when AI-scored and ≥ 70, ink when 45–69, grey when lower or when it is only the CV estimate. In the details, "Come è calcolato il match" breaks it down with bars: AI evaluation, title closeness (with the closest CV title) and CV skills found.
 
-### Match Tag (signature)
-"81% MATCH" in mono inside a pill. AI-scored: coral text on a coral-tinted pill when strong, ink when below 70. Quick estimate from the CV: dashed outline, "64% STIMA" in muted.
-
-### Radar Rings (signature)
-Faint coral rings with one sweep and two blips behind the Offerte header, desktop only.
+### Radar (signature)
+Coral rings, a 50° sweep that fades into its needle and turns slowly, two blips, behind the Offerte header on desktop.
 
 ## Do's and Don'ts
 
 ### Do:
 - Do keep coral for new, strong and live; everything else is ink and grey.
 - Do put numbers, dates and sources in mono.
-- Do show why an offer matches ("Dal tuo CV" + chips).
+- Do make the match readable at a glance and explain it in the details.
+- Do animate what the person did (switch, dismiss, open) and keep ambient motion to the radar.
 
 ### Don't:
-- Don't bring back a dark theme, multi-colour fills, heavy display weights or decorative state badges: the owner rejected them.
+- Don't bring back multi-colour fills, heavy display weights or decorative state badges: the owner rejected them.
+- Don't add entrance animations to every section or hover motion to every element.
 - Don't use mono labels as eyebrows above headings.
 - Don't copy the reference site's logo, illustrations or copy.

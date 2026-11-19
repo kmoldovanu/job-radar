@@ -21,7 +21,7 @@ JobRadar searches official job APIs and company career pages worldwide, filters 
 
 ## Operating Context
 - Bulk work (search, AI evaluation, preparing N applications) is orchestrated by the browser as queues of short requests with a progress bar (serverless limit).
-- Installable PWA; light UI; Italian interface; ads and generated documents can be in other languages.
+- Installable PWA; dark UI; Italian interface; ads and generated documents can be in other languages.
 - Daily cron search at 06:00 UTC when configured.
 
 ## Capabilities and Constraints
@@ -31,7 +31,7 @@ JobRadar searches official job APIs and company career pages worldwide, filters 
 
 ## Brand Commitments
 - Name: JobRadar. The radar mark (concentric rings, sweep, one coral blip) stays as the symbol.
-- Light, clean look with one coral accent, chosen by the owner after the dark "transit" redesign; visual reference given by the owner: www.job-radar.io (take the language, never its logo or copy).
+- Dark, clean look with one coral accent and quiet motion, chosen by the owner after rejecting a heavy multi-colour "transit" redesign; visual reference given by the owner: www.job-radar.io (take the language, never its logo or copy). The match must be readable at a glance.
 - Language: Italian, plain and direct.
 
 ## Evidence on Hand

@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 /*
- * Stile chiaro e pulito: fondo bianco, testo quasi nero, un solo accento corallo
- * (novità, match, il punto del radar), bottoni neri a pillola, bordi sottili,
+ * Stile scuro e pulito: fondo nero, testo chiaro, un solo accento corallo
+ * (novità, match, il punto del radar), bottoni chiari a pillola, bordi sottili,
  * Geist per i testi e Geist Mono piccolo e spaziato per etichette e dati.
  *
  * I nomi dei token restano quelli storici dell'app (night = fondo pagina, panel = card, ink = testo…).
@@ -12,39 +12,41 @@
   --font-display: var(--font-body), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-code), ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --color-night: #ffffff;
-  --color-rail: #f7f7f6;
-  --color-panel: #ffffff;
-  --color-panel-2: #f3f3f2;
-  --color-line: #ebebea;
-  --color-line-strong: #dcdcda;
-  --color-ink: #0a0a0a;
-  --color-muted: #5f5f5f;
-  --color-faint: #767676;
-  --color-cream: #f4ecdc;
+  --color-night: #000000;
+  --color-rail: #0c0c0c;
+  --color-panel: #111111;
+  --color-panel-2: #1c1c1c;
+  --color-line: #222222;
+  --color-line-strong: #333333;
+  --color-hover: #444444;
+  --color-ink: #ededed;
+  --color-muted: #a3a3a3;
+  --color-faint: #8b8b8b;
+  /* pannelli di riepilogo: un nero caldo */
+  --color-cream: #1a1510;
 
-  /* accento: corallo. Testo piccolo compreso (4.6:1 sul bianco) */
-  --color-signal: #d9381e;
-  --color-signal-strong: #c02f17;
+  /* accento: corallo, 6.9:1 sul nero */
+  --color-signal: #ff5c3d;
+  --color-signal-strong: #ff7a5f;
   /* stati, usati con parsimonia (pallini, testo piccolo) */
-  --color-good: #15803d;
-  --color-bad: #b91c1c;
-  --color-sky: #2563eb;
-  --color-violet: #6d28d9;
-  --color-amber: #b45309;
+  --color-good: #4ade80;
+  --color-bad: #f87171;
+  --color-sky: #60a5fa;
+  --color-violet: #a78bfa;
+  --color-amber: #fbbf24;
 
-  /* slate rimappato: nelle pagine slate-200/300 erano "testo quasi pieno" */
-  --color-slate-50: #0a0a0a;
-  --color-slate-100: #171717;
-  --color-slate-200: #262626;
-  --color-slate-300: #3d3d3d;
-  --color-slate-400: #5f5f5f;
-  --color-slate-500: #767676;
-  --color-slate-600: #a3a3a3;
-  --color-slate-700: #dcdcda;
-  --color-slate-800: #ebebea;
-  --color-slate-900: #f3f3f2;
-  --color-slate-950: #ffffff;
+  /* slate rimappato: nelle pagine slate-200/300 sono "testo quasi pieno" */
+  --color-slate-50: #fafafa;
+  --color-slate-100: #f5f5f5;
+  --color-slate-200: #e5e5e5;
+  --color-slate-300: #d4d4d4;
+  --color-slate-400: #a3a3a3;
+  --color-slate-500: #8b8b8b;
+  --color-slate-600: #525252;
+  --color-slate-700: #333333;
+  --color-slate-800: #222222;
+  --color-slate-900: #1c1c1c;
+  --color-slate-950: #000000;
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -64,8 +66,8 @@
 }
 
 :root {
-  color-scheme: light;
-  accent-color: var(--color-ink);
+  color-scheme: dark;
+  accent-color: var(--color-signal);
 }
 
 html {
@@ -81,7 +83,7 @@ body {
 }
 
 ::selection {
-  background: color-mix(in oklab, var(--color-signal) 22%, transparent);
+  background: color-mix(in oklab, var(--color-signal) 35%, transparent);
   color: var(--color-ink);
 }
 
@@ -117,23 +119,23 @@ a {
   @apply inline-flex min-h-10 items-center justify-center gap-1.5 rounded-full px-4 text-sm font-medium transition-[background-color,border-color,color,transform] duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40;
 }
 @utility btn-primary {
-  @apply btn bg-ink text-white hover:bg-[#2a2a2a];
+  @apply btn bg-ink text-night hover:bg-white;
 }
 @utility btn-secondary {
-  @apply btn border border-line-strong bg-white text-ink hover:border-[#c4c4c2] hover:bg-rail;
+  @apply btn border border-line-strong bg-panel text-ink hover:border-hover hover:bg-panel-2;
 }
 @utility btn-success {
-  @apply btn bg-ink text-white hover:bg-[#2a2a2a];
+  @apply btn bg-ink text-night hover:bg-white;
 }
 @utility btn-ghost {
   @apply btn text-muted hover:bg-panel-2 hover:text-ink;
 }
 @utility btn-icon {
-  @apply inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-line-strong bg-white text-muted transition-colors duration-150 hover:border-[#c4c4c2] hover:text-ink active:scale-95 disabled:opacity-40;
+  @apply inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-line-strong bg-panel text-muted transition-colors duration-150 hover:border-hover hover:text-ink active:scale-95 disabled:opacity-40;
 }
 @utility input {
   /* 16px: sotto questa misura Safari su iPhone fa zoom quando tocchi il campo */
-  @apply w-full rounded-xl border border-line-strong bg-white px-3 py-2.5 text-base text-ink caret-signal outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-faint hover:border-[#c4c4c2] focus:border-ink focus:shadow-[0_0_0_3px_rgb(10_10_10/0.06)];
+  @apply w-full rounded-xl border border-line-strong bg-rail px-3 py-2.5 text-base text-ink caret-signal outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-faint hover:border-hover focus:border-ink focus:shadow-[0_0_0_3px_rgb(255_255_255/0.08)];
 }
 @utility label {
   @apply mb-1.5 block text-[13px] font-medium text-muted;

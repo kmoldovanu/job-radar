@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, m } from "motion/react";
 import { Icon } from "@/components/Icon";
+import { spring } from "@/components/motion";
 import { Empty, ErrorBox, LiveLine, PageHeader, Pill, ViaSource } from "@/components/ui";
 import { api, daysAgo, fmtDate } from "@/lib/client";
 import { APPLICATION_STATUSES, type ApplicationStatus } from "@/lib/types";
@@ -116,8 +118,16 @@ export default function ApplicationsPage() {
       {apps && apps.length === 0 && !error && <Empty>Non hai ancora segnato nessuna candidatura. Premi “Candidato” su un&apos;offerta.</Empty>}
 
       <div className="space-y-3">
-        {visible.map((a) => (
-          <article key={a.id} className="card animate-rise space-y-3">
+        <AnimatePresence mode="popLayout" initial={false}>
+        {visible.map((a, i) => (
+          <m.article
+            key={a.id}
+            layout="position"
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0, transition: { ...spring, delay: Math.min(i, 8) * 0.05 } }}
+            exit={{ opacity: 0, transition: { duration: 0.15 } }}
+            className="card space-y-3"
+          >
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <h2 className="text-[17px] font-semibold leading-snug tracking-[-0.015em]">{a.title}</h2>
@@ -135,7 +145,7 @@ export default function ApplicationsPage() {
                   value={a.status}
                   onChange={(e) => patch(a.id, { status: e.target.value as ApplicationStatus })}
                   aria-label="Stato della candidatura"
-                  className="min-h-9 cursor-pointer appearance-none rounded-full border border-line-strong bg-white pr-8 pl-7 text-sm font-medium capitalize text-ink transition-colors hover:border-[#c4c4c2]"
+                  className="min-h-9 cursor-pointer appearance-none rounded-full border border-line-strong bg-panel pr-8 pl-7 text-sm font-medium capitalize text-ink transition-colors hover:border-hover"
                 >
                   {APPLICATION_STATUSES.map((s) => (
                     <option key={s} value={s}>
@@ -177,8 +187,9 @@ export default function ApplicationsPage() {
               defaultValue={a.notes}
               onBlur={(e) => e.target.value !== a.notes && patch(a.id, { notes: e.target.value })}
             />
-          </article>
+          </m.article>
         ))}
+        </AnimatePresence>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { cookies } from "next/headers";
 import { DemoBanner } from "@/components/DemoBanner";
+import { MotionProvider } from "@/components/motion";
 import { Nav } from "@/components/Nav";
 import { DEMO_PREFIX, SESSION_COOKIE } from "@/lib/auth";
 import { RegisterSW } from "@/components/RegisterSW";
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
   title: "JobRadar",
   description: "Trova offerte di lavoro in tutto il mondo, prepara CV su misura e traccia le candidature.",
   applicationName: "JobRadar",
-    appleWebApp: { capable: true, title: "JobRadar", statusBarStyle: "default" },
+    appleWebApp: { capable: true, title: "JobRadar", statusBarStyle: "black-translucent" },
   formatDetection: { telephone: false },
   robots: { index: false, follow: false },
 };
@@ -24,8 +25,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  colorScheme: "light",
-  themeColor: "#ffffff",
+  colorScheme: "dark",
+  themeColor: "#000000",
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -34,9 +35,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="it" className={`${body.variable} ${code.variable}`}>
       <body className="min-h-dvh">
+        <MotionProvider>
         {demo && <DemoBanner />}
         <Nav />
         <main className="mx-auto w-full max-w-4xl px-4 pt-3 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pt-6 md:pb-12">{children}</main>
+        </MotionProvider>
         <RegisterSW />
       </body>
     </html>

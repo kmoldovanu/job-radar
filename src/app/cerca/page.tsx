@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Icon, RadarMark } from "@/components/Icon";
-import { ErrorBox, PageHeader, Progress } from "@/components/ui";
+import { CountUp, ErrorBox, PageHeader, Progress } from "@/components/ui";
 import { api } from "@/lib/client";
 import { searchQueries } from "@/lib/cv/signals";
 import { runQueue } from "@/lib/queue";
@@ -255,7 +255,7 @@ export default function SearchPage() {
                 aria-checked={on}
                 disabled={!settings || !aiKey}
                 onClick={() => setAutoEval(v)}
-                className={`flex w-full items-start gap-3 rounded-xl border p-3.5 text-left transition-colors duration-150 disabled:opacity-50 ${on ? "border-ink bg-rail" : "border-line-strong hover:border-[#c4c4c2]"}`}
+                className={`flex w-full items-start gap-3 rounded-xl border p-3.5 text-left transition-colors duration-150 disabled:opacity-50 ${on ? "border-ink bg-rail" : "border-line-strong hover:border-hover"}`}
               >
                 <span className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border-2 ${on ? "border-ink" : "border-slate-600"}`}>
                   {on && <span className="size-2.5 rounded-full bg-ink" />}
@@ -289,7 +289,7 @@ export default function SearchPage() {
         <section className="space-y-3 rounded-2xl bg-cream p-5">
           <h2 className="text-lg font-semibold">Risultato</h2>
           <p className="text-sm">
-            <span className="text-4xl font-semibold tracking-[-0.03em] text-signal tabular-nums">{summary.inserted}</span>{" "}
+            <CountUp value={summary.inserted} className="text-4xl font-semibold tracking-[-0.03em] text-signal tabular-nums" />{" "}
             <span className="text-ink">nuove offerte</span>
             <span className="block text-muted">su {summary.fetched} annunci letti, {totalRejected} scartati</span>
           </p>

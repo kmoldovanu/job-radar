@@ -1,6 +1,6 @@
 {
  "schemaVersion": 2,
- "generatedAt": "2026-11-19T15:18:31.085472+00:00",
+ "generatedAt": "2026-11-19T15:28:13.470411+00:00",
  "title": "Design System: JobRadar",
  "extensions": {
   "colorMeta": {
@@ -9,41 +9,41 @@
     "displayName": "Coral",
     "tonalRamp": [
      "#4a1309",
-     "#6e1c0d",
-     "#932512",
-     "#b52f17",
-     "#d9381e",
-     "#e5432a",
-     "#f39a88",
-     "#fbe1db"
+     "#7a1f0f",
+     "#b02b14",
+     "#e2401f",
+     "#ff5c3d",
+     "#ff7a5f",
+     "#ffb09f",
+     "#ffe3dc"
     ]
    },
-   "ink": {
+   "black": {
     "role": "neutral",
-    "displayName": "Ink",
+    "displayName": "Black",
     "tonalRamp": [
-     "#0a0a0a",
-     "#262626",
-     "#3d3d3d",
-     "#5f5f5f",
-     "#767676",
-     "#a3a3a3",
-     "#dcdcda",
-     "#f7f7f6"
+     "#000000",
+     "#0c0c0c",
+     "#111111",
+     "#1c1c1c",
+     "#222222",
+     "#333333",
+     "#8b8b8b",
+     "#ededed"
     ]
    },
    "cream": {
     "role": "neutral",
-    "displayName": "Cream",
+    "displayName": "Warm black",
     "tonalRamp": [
-     "#5c4f33",
-     "#7d6c48",
-     "#a08d63",
-     "#c2ae84",
-     "#ddcba6",
-     "#e9dcc0",
-     "#f4ecdc",
-     "#faf6ee"
+     "#0d0a07",
+     "#1a1510",
+     "#2a2219",
+     "#3d3224",
+     "#5a4a35",
+     "#7d6a4f",
+     "#b3a07f",
+     "#e9dcc0"
     ]
    }
   },
@@ -60,30 +60,35 @@
   "shadows": [
    {
     "name": "nav",
-    "value": "0 1px 2px rgb(0 0 0/0.04), 0 8px 24px -12px rgb(0 0 0/0.12)",
+    "value": "0 12px 32px -16px rgb(0 0 0/0.9)",
     "purpose": "Floating desktop nav."
    },
    {
     "name": "card-hover",
-    "value": "0 8px 24px -16px rgb(0 0 0/0.18)",
+    "value": "0 16px 40px -24px rgb(0 0 0/0.9)",
     "purpose": "Offer card hover."
-   },
-   {
-    "name": "toast",
-    "value": "0 12px 32px -8px rgb(0 0 0/0.35)",
-    "purpose": "Toast."
    }
   ],
   "motion": [
    {
-    "name": "ease-out-expo",
-    "value": "cubic-bezier(0.16, 1, 0.3, 1)",
-    "purpose": "Card rise 320ms."
+    "name": "spring",
+    "value": "spring stiffness 420 damping 36",
+    "purpose": "Tabs, nav pill, card enter, toast."
    },
    {
-    "name": "state",
-    "value": "150ms",
-    "purpose": "Hover and colour transitions."
+    "name": "ease-out-expo",
+    "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+    "purpose": "Match count-up and bar fill, 0.9s."
+   },
+   {
+    "name": "exit",
+    "value": "180ms ease-in",
+    "purpose": "Dismiss / apply."
+   },
+   {
+    "name": "sweep",
+    "value": "9s linear infinite",
+    "purpose": "Radar sweep."
    }
   ],
   "breakpoints": [
@@ -104,7 +109,7 @@
    "refersTo": "button-primary",
    "description": "The one main action per area.",
    "html": "<button class=\"ds-btn\">Avvia la ricerca</button>",
-   "css": ".ds-btn{background:#0a0a0a;color:#fff;border:0;border-radius:9999px;min-height:40px;padding:0 16px;font:500 14px Geist,system-ui,sans-serif;transition:background-color .15s}.ds-btn:hover{background:#2a2a2a}.ds-btn:focus-visible{outline:2px solid #0a0a0a;outline-offset:2px}"
+   "css": ".ds-btn{background:#ededed;color:#000;border:0;border-radius:9999px;min-height:40px;padding:0 16px;font:500 14px Geist,system-ui,sans-serif;transition:background-color .15s}.ds-btn:hover{background:#fff}.ds-btn:focus-visible{outline:2px solid #0a0a0a;outline-offset:2px}"
   },
   {
    "name": "Secondary Button",
@@ -112,7 +117,7 @@
    "refersTo": "button-secondary",
    "description": "Annuncio, downloads.",
    "html": "<button class=\"ds-btn2\">Annuncio</button>",
-   "css": ".ds-btn2{background:#fff;color:#0a0a0a;border:1px solid #dcdcda;border-radius:9999px;min-height:40px;padding:0 16px;font:500 14px Geist,system-ui,sans-serif}.ds-btn2:hover{border-color:#c4c4c2;background:#f7f7f6}.ds-btn2:focus-visible{outline:2px solid #0a0a0a;outline-offset:2px}"
+   "css": ".ds-btn2{background:#111;color:#ededed;border:1px solid #333;border-radius:9999px;min-height:40px;padding:0 16px;font:500 14px Geist,system-ui,sans-serif}.ds-btn2:hover{border-color:#444;background:#1c1c1c}.ds-btn2:focus-visible{outline:2px solid #0a0a0a;outline-offset:2px}"
   },
   {
    "name": "Input",
@@ -120,15 +125,15 @@
    "refersTo": "input",
    "description": "Text fields.",
    "html": "<input class=\"ds-in\" placeholder=\"Nome azienda\">",
-   "css": ".ds-in{background:#fff;color:#0a0a0a;border:1px solid #dcdcda;border-radius:12px;padding:10px 12px;font:400 16px Geist,system-ui,sans-serif;caret-color:#d9381e;outline:none}.ds-in:hover{border-color:#c4c4c2}.ds-in:focus{border-color:#0a0a0a;box-shadow:0 0 0 3px rgb(10 10 10/.06)}"
+   "css": ".ds-in{background:#111;color:#ededed;border:1px solid #333;border-radius:12px;padding:10px 12px;font:400 16px Geist,system-ui,sans-serif;caret-color:#ff5c3d;outline:none}.ds-in:hover{border-color:#444}.ds-in:focus{border-color:#ededed;box-shadow:0 0 0 3px rgb(255 255 255/.08)}"
   },
   {
-   "name": "Match Tag",
+   "name": "Match Meter",
    "kind": "custom",
-   "refersTo": "match-tag",
-   "description": "AI match vs quick estimate.",
-   "html": "<span class=\"ds-m\">81% match</span> <span class=\"ds-m ds-q\">64% stima</span>",
-   "css": ".ds-m{display:inline-flex;gap:4px;border:1px solid rgb(217 56 30/.4);background:rgb(217 56 30/.06);color:#d9381e;border-radius:9999px;padding:2px 8px;font:400 11px 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase}.ds-m.ds-q{border:1px dashed #dcdcda;background:transparent;color:#5f5f5f}"
+   "refersTo": "match-meter",
+   "description": "Big match number with bar and caption: Match AI or Stima CV.",
+   "html": "<div class=\"ds-mm\"><b>81<small>%</small></b><i><span style=\"width:81%\"></span></i><em>Match AI</em></div>",
+   "css": ".ds-mm{display:inline-flex;flex-direction:column;align-items:flex-end;gap:6px;width:72px;color:#ff5c3d}.ds-mm b{font:600 30px/1 Geist,system-ui,sans-serif;letter-spacing:-.04em}.ds-mm small{font-size:15px;letter-spacing:0}.ds-mm i{display:block;width:100%;height:4px;border-radius:9999px;background:#222;overflow:hidden}.ds-mm i span{display:block;height:100%;border-radius:9999px;background:#ff5c3d}.ds-mm em{font:400 11px 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;font-style:normal;color:#8b8b8b}"
   },
   {
    "name": "Card",
@@ -136,7 +141,7 @@
    "refersTo": "card",
    "description": "Offers and applications.",
    "html": "<article class=\"ds-card\"><h3>Backend Engineer Python</h3><p>Brightfield ∙ Berlino</p></article>",
-   "css": ".ds-card{background:#fff;border:1px solid #ebebea;border-radius:16px;padding:16px;font:400 15px Geist,system-ui,sans-serif;transition:border-color .15s,box-shadow .15s}.ds-card:hover{border-color:#dcdcda;box-shadow:0 8px 24px -16px rgb(0 0 0/.18)}.ds-card h3{margin:0;font-weight:600;font-size:17px;letter-spacing:-.015em}.ds-card p{margin:2px 0 0;color:#5f5f5f}"
+   "css": ".ds-card{background:#111;border:1px solid #222;border-radius:16px;padding:16px;font:400 15px Geist,system-ui,sans-serif;transition:border-color .15s,box-shadow .15s}.ds-card:hover{border-color:#333;box-shadow:0 8px 24px -16px rgb(0 0 0/.18)}.ds-card h3{margin:0;font-weight:600;font-size:17px;letter-spacing:-.015em}.ds-card p{margin:2px 0 0;color:#a3a3a3}"
   },
   {
    "name": "Filter Pill",
@@ -144,17 +149,17 @@
    "refersTo": "filter-pill-on",
    "description": "Sort and filters.",
    "html": "<button class=\"ds-p ds-on\">Punteggio AI</button> <button class=\"ds-p\">Più recenti</button>",
-   "css": ".ds-p{min-height:32px;padding:0 12px;border-radius:9999px;border:1px solid #dcdcda;background:#fff;color:#3d3d3d;font:500 13px Geist,system-ui,sans-serif}.ds-p:hover{color:#0a0a0a;border-color:#c4c4c2}.ds-p.ds-on{background:#0a0a0a;border-color:#0a0a0a;color:#fff}"
+   "css": ".ds-p{min-height:32px;padding:0 12px;border-radius:9999px;border:1px solid #333;background:#111;color:#d4d4d4;font:500 13px Geist,system-ui,sans-serif}.ds-p:hover{color:#ededed;border-color:#444}.ds-p.ds-on{background:#0a0a0a;border-color:#ededed;color:#fff}"
   }
  ],
  "narrative": {
-  "northStar": "Il punto sul radar",
-  "overview": "A calm, light working tool. White ground, near-black ink, and one coral that always means \"this matters\": a new offer, a strong match, the live dot.",
+  "northStar": "Il punto sul radar, di notte",
+  "overview": "A calm, dark working tool. True black ground, light ink, and one coral that always means \"this matters\": a new offer, a strong match, the live dot, the radar sweep.",
   "keyCharacteristics": [
-   "Light always: white ground, hairline borders, cream only for summary panels.",
+   "Dark always: black page, #111 cards, hairline borders, warm-black panels for summaries.",
    "One accent, coral, used for meaning, never decoration.",
-   "Mono for data (match %, dates, sources, statuses), sans for everything people read.",
-   "Black pill for the one primary action per area."
+   "The match is the loudest number on a card: big, with a bar and what it is.",
+   "Motion answers actions (tabs, dismiss, expand) plus one ambient element, the radar sweep."
   ],
   "rules": [
    {
@@ -171,10 +176,12 @@
   "dos": [
    "Do keep coral for new, strong and live; everything else is ink and grey.",
    "Do put numbers, dates and sources in mono.",
-   "Do show why an offer matches (\"Dal tuo CV\" + chips)."
+   "Do make the match readable at a glance and explain it in the details.",
+   "Do animate what the person did (switch, dismiss, open) and keep ambient motion to the radar."
   ],
   "donts": [
-   "Don't bring back a dark theme, multi-colour fills, heavy display weights or decorative state badges: the owner rejected them.",
+   "Don't bring back multi-colour fills, heavy display weights or decorative state badges: the owner rejected them.",
+   "Don't add entrance animations to every section or hover motion to every element.",
    "Don't use mono labels as eyebrows above headings.",
    "Don't copy the reference site's logo, illustrations or copy."
   ]

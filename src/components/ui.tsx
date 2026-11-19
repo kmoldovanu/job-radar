@@ -1,6 +1,9 @@
 "use client";
 
+import { animate, m, useMotionValue, useReducedMotion, useTransform } from "motion/react";
+import { useEffect, useId } from "react";
 import { SOURCE_LABELS, type SourceId } from "@/lib/types";
+import { easeOut, spring } from "./motion";
 
 export function PageHeader({ title, subtitle, action }: { title: string; subtitle?: React.ReactNode; action?: React.ReactNode }) {
   return (
@@ -41,22 +44,58 @@ export function Progress({ done, total, label }: { done: number; total: number; 
   );
 }
 
-/**
- * Il match: "81% MATCH" in mono.
- * Valutato dall'AI = corallo pieno di testo; stima rapida dal CV (senza AI) = grigio.
- */
-export function MatchTag({ score, ai }: { score: number; ai: boolean }) {
-  const strong = ai && score >= 70;
+/** Colore del match: corallo = forte (AI ≥ 70), chiaro = da leggere bene, grigio = lontano o solo stima. */
+export function matchColor(score: number, ai: boolean) {
+  if (!ai) return "var(--color-muted)";
+  return score >= 70 ? "var(--color-signal)" : score >= 45 ? "var(--color-ink)" : "var(--color-faint)";
+}
+
+/** Numero che sale fino al valore (una volta, quando compare). */
+export function CountUp({ value, className }: { value: number; className?: string }) {
+  const reduce = useReducedMotion();
+  const mv = useMotionValue(reduce ? value : 0);
+  const shown = useTransform(mv, (v) => Math.round(v));
+  useEffect(() => {
+    const c = animate(mv, value, { duration: reduce ? 0 : 0.9, ease: easeOut });
+    return () => c.stop();
+  }, [mv, value, reduce]);
+  return <m.span className={className}>{shown}</m.span>;
+}
+
+/** Barra sottile che si riempie fino a `pct`. */
+export function Meter({ pct, color, className = "h-1" }: { pct: number; color: string; className?: string }) {
   return (
-    <span
-      className={`mono inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-2 py-0.5 tabular-nums ${
-        ai ? (strong ? "border-signal/40 bg-signal/[0.06] text-signal" : "border-line-strong text-ink") : "border-dashed border-line-strong text-muted"
-      }`}
-      title={ai ? `Punteggio AI: ${score}/100` : `Stima rapida dal CV (senza AI): ${score}/100`}
+    <div className={`w-full overflow-hidden rounded-full bg-line ${className}`}>
+      <m.div
+        className="h-full origin-left rounded-full"
+        style={{ width: `${Math.max(2, Math.min(100, pct))}%`, background: color }}
+        initial={{ scaleX: 0 }}
+        animate={{ scaleX: 1 }}
+        transition={{ duration: 0.9, ease: easeOut }}
+      />
+    </div>
+  );
+}
+
+/**
+ * Il match, grande e chiaro: "81%" con la barra e cosa è.
+ * Valutato dall'AI = "Match AI" (corallo se forte); senza AI = "Stima CV", in grigio.
+ */
+export function MatchMeter({ score, ai }: { score: number; ai: boolean }) {
+  const color = matchColor(score, ai);
+  return (
+    <div
+      className="flex w-[72px] shrink-0 flex-col items-end gap-1.5 text-right sm:w-20"
+      title={ai ? `Valutazione AI: ${score} su 100` : `Stima rapida dal tuo CV, senza AI: ${score} su 100`}
     >
-      <span className="font-medium">{score}%</span>
-      {ai ? "match" : "stima"}
-    </span>
+      <div className="flex items-baseline font-semibold leading-none tracking-[-0.04em] tabular-nums" style={{ color }} aria-hidden="true">
+        <CountUp value={score} className="text-[30px] sm:text-[34px]" />
+        <span className="ml-px text-[15px] tracking-normal">%</span>
+      </div>
+      <Meter pct={score} color={color} />
+      <span className="mono whitespace-nowrap text-faint" aria-hidden="true">{ai ? "Match AI" : "Stima CV"}</span>
+      <span className="sr-only">{ai ? `Match AI ${score}%` : `Stima dal CV ${score}%`}</span>
+    </div>
   );
 }
 
@@ -82,6 +121,7 @@ export function Segmented<T extends string>({
   options: { value: T; label: string; count?: number }[];
   label: string;
 }) {
+  const group = useId();
   return (
     <div role="tablist" aria-label={label} className="flex gap-1 overflow-x-auto rounded-full bg-panel-2 p-1 [scrollbar-width:none]">
       {options.map((o) => {
@@ -92,10 +132,18 @@ export function Segmented<T extends string>({
             role="tab"
             aria-selected={on}
             onClick={() => onChange(o.value)}
-            className={`flex min-h-9 flex-1 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-sm font-medium transition-[background-color,color,box-shadow] duration-150 ${on ? "bg-white text-ink shadow-[0_1px_2px_rgb(0_0_0/0.08),0_0_0_1px_rgb(0_0_0/0.04)]" : "text-muted hover:text-ink"}`}
+            className={`relative flex min-h-9 flex-1 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-sm font-medium transition-colors duration-150 ${on ? "text-ink" : "text-muted hover:text-ink"}`}
           >
-            {o.label}
-            {o.count != null && <span className={`font-mono text-xs tabular-nums ${on ? "text-signal" : "text-faint"}`}>{o.count}</span>}
+            {on && (
+              <m.span
+                layoutId={`seg-${group}`}
+                className="absolute inset-0 rounded-full bg-line-strong shadow-[0_1px_2px_rgb(0_0_0/0.5)]"
+                transition={spring}
+                aria-hidden="true"
+              />
+            )}
+            <span className="relative">{o.label}</span>
+            {o.count != null && <span className={`relative font-mono text-xs tabular-nums ${on ? "text-signal" : "text-faint"}`}>{o.count}</span>}
           </button>
         );
       })}
@@ -108,7 +156,7 @@ export function Pill({ on, onClick, children }: { on: boolean; onClick: () => vo
     <button
       onClick={onClick}
       aria-pressed={on}
-      className={`inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[13px] font-medium transition-colors duration-150 ${on ? "border-ink bg-ink text-white" : "border-line-strong bg-white text-slate-300 hover:border-[#c4c4c2] hover:text-ink"}`}
+      className={`inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[13px] font-medium transition-colors duration-150 ${on ? "border-ink bg-ink text-night" : "border-line-strong bg-panel text-slate-300 hover:border-hover hover:text-ink"}`}
     >
       {children}
     </button>
@@ -136,7 +184,7 @@ export function Empty({ children }: { children: React.ReactNode }) {
 export function ErrorBox({ error }: { error: string }) {
   if (!error) return null;
   return (
-    <div role="alert" className="whitespace-pre-line rounded-xl border border-[#f5c2bb] bg-[#fdf3f1] p-3 text-sm text-[#9f2412]">
+    <div role="alert" className="whitespace-pre-line rounded-xl border border-bad/40 bg-bad/10 p-3 text-sm text-[#fecaca]">
       {error}
     </div>
   );
@@ -145,14 +193,19 @@ export function ErrorBox({ error }: { error: string }) {
 export function Toast({ message, action, onAction }: { message: string; action?: string; onAction?: () => void }) {
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-30 flex justify-center px-4 md:bottom-6" role="status" aria-live="polite">
-      <div className="pointer-events-auto flex max-w-md animate-rise items-center gap-3 rounded-full bg-ink py-1.5 pr-1.5 pl-4 text-sm font-medium text-white shadow-[0_12px_32px_-8px_rgb(0_0_0/0.35)]">
+      <m.div
+        initial={{ opacity: 0, y: 16, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 8, scale: 0.98, transition: { duration: 0.15 } }}
+        transition={spring}
+        className="pointer-events-auto flex max-w-md items-center gap-3 rounded-full bg-ink py-1.5 pr-1.5 pl-4 text-sm font-medium text-night shadow-[0_12px_32px_-8px_rgb(0_0_0/0.35)]">
         <span>{message}</span>
         {action && (
-          <button className="min-h-8 rounded-full px-3 font-medium text-[#ff8a70] hover:bg-white/10" onClick={onAction}>
+          <button className="min-h-8 rounded-full px-3 font-medium text-[#c02f17] hover:bg-black/5" onClick={onAction}>
             {action}
           </button>
         )}
-      </div>
+      </m.div>
     </div>
   );
 }

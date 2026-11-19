@@ -98,7 +98,7 @@ export default function ProfilePage() {
 
       <section className="card space-y-4" aria-labelledby="cv">
         <div className="flex items-start gap-3.5">
-          <div className="grid size-12 shrink-0 place-items-center rounded-xl bg-[#fdf0ed] text-signal">
+          <div className="grid size-12 shrink-0 place-items-center rounded-xl bg-signal/12 text-signal">
             <Icon name="file" className="size-6" strokeWidth={2} />
           </div>
           <div className="min-w-0 flex-1">
@@ -139,7 +139,7 @@ export default function ProfilePage() {
       </section>
 
       {msg && (
-        <p role="status" className="rounded-xl border border-[#cfe6d6] bg-[#f2f8f4] p-3 text-sm text-[#166534]">
+        <p role="status" className="rounded-xl border border-good/30 bg-good/10 p-3 text-sm text-[#bbf7d0]">
           {msg}
         </p>
       )}
@@ -387,10 +387,10 @@ function CvIndexCard({ index }: { index: CvIndex }) {
               <li
                 key={s.name}
                 title={s.aliases.length ? `Anche: ${s.aliases.join(", ")}` : undefined}
-                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[13px] font-medium ${s.weight === 3 ? "border-ink bg-ink text-white" : "border-line-strong text-slate-300"}`}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[13px] font-medium ${s.weight === 3 ? "border-ink bg-ink text-night" : "border-line-strong text-slate-300"}`}
               >
                 {s.name}
-                {s.aliases.length > 0 && <span className={`font-mono text-[11px] ${s.weight === 3 ? "text-white/60" : "text-faint"}`}>+{s.aliases.length}</span>}
+                {s.aliases.length > 0 && <span className={`font-mono text-[11px] ${s.weight === 3 ? "text-night/60" : "text-faint"}`}>+{s.aliases.length}</span>}
               </li>
             ))}
           </ul>
