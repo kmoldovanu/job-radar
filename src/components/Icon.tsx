@@ -32,17 +32,17 @@ export function Icon({ name, className = "size-5", strokeWidth = 1.8 }: { name: 
   );
 }
 
-/** Marchio: cerchi del radar, la lancetta e il punto ambra. Con `scanning` la lancetta gira (ricerca in corso). */
+/** Marchio: cerchi del radar, la lancetta e il punto corallo. Con `scanning` la lancetta gira (ricerca in corso). */
 export function RadarMark({ className = "size-7", scanning = false }: { className?: string; scanning?: boolean }) {
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden="true">
-      <circle cx="16" cy="16" r="13" fill="#131d30" stroke="#3a4a66" strokeWidth="2" />
-      <circle cx="16" cy="16" r="7.5" fill="none" stroke="#3a4a66" strokeWidth="1.6" />
+      <circle cx="16" cy="16" r="13.5" fill="none" stroke="#e2e2e0" strokeWidth="1.5" />
+      <circle cx="16" cy="16" r="8" fill="none" stroke="#e2e2e0" strokeWidth="1.5" />
       <g className={scanning ? "origin-center animate-sweep" : undefined} style={{ transformBox: "view-box" }}>
-        <path d="M16 16 L25.2 6.8" stroke="#9aa8bf" strokeWidth="2" strokeLinecap="round" />
+        <path d="M16 16 L25.5 6.5" stroke="#e5432a" strokeWidth="2" strokeLinecap="round" />
       </g>
-      <circle cx="16" cy="16" r="2.2" fill="#edf1f7" />
-      <circle cx="21.5" cy="20" r="2.8" fill="#f6b52e" />
+      <circle cx="16" cy="16" r="2.3" fill="#0a0a0a" />
+      <circle cx="21.6" cy="20.2" r="2.6" fill="#e5432a" />
     </svg>
   );
 }

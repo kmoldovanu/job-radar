@@ -1,91 +1,49 @@
 {
  "schemaVersion": 2,
- "generatedAt": "2026-11-19T14:16:37.296581Z",
+ "generatedAt": "2026-11-19T15:18:31.085472+00:00",
  "title": "Design System: JobRadar",
  "extensions": {
   "colorMeta": {
-   "signal": {
+   "coral": {
     "role": "primary",
-    "displayName": "Amber blip",
+    "displayName": "Coral",
     "tonalRamp": [
-     "#3d2a05",
-     "#5c3f08",
-     "#7f580c",
-     "#a87411",
-     "#d29318",
-     "#f6b52e",
-     "#ffcf6e",
-     "#ffe8b8"
+     "#4a1309",
+     "#6e1c0d",
+     "#932512",
+     "#b52f17",
+     "#d9381e",
+     "#e5432a",
+     "#f39a88",
+     "#fbe1db"
     ]
    },
-   "good": {
-    "role": "state",
-    "displayName": "Green line",
-    "tonalRamp": [
-     "#0b3020",
-     "#104a31",
-     "#156543",
-     "#1d8456",
-     "#25a368",
-     "#2fc27a",
-     "#7fe0ad",
-     "#c6f3da"
-    ]
-   },
-   "sky": {
-    "role": "state",
-    "displayName": "Blue line",
-    "tonalRamp": [
-     "#0e2547",
-     "#143665",
-     "#1b4a88",
-     "#2563b3",
-     "#3478dc",
-     "#4c97f5",
-     "#8dbcff",
-     "#cfe2ff"
-    ]
-   },
-   "violet": {
-    "role": "state",
-    "displayName": "Violet line",
-    "tonalRamp": [
-     "#251b47",
-     "#352766",
-     "#47358a",
-     "#5e48b3",
-     "#7a62d8",
-     "#a184f4",
-     "#c3b1ff",
-     "#e6deff"
-    ]
-   },
-   "bad": {
-    "role": "state",
-    "displayName": "Red line",
-    "tonalRamp": [
-     "#47150f",
-     "#661f17",
-     "#8a2a20",
-     "#b3382b",
-     "#d84c3e",
-     "#f0645a",
-     "#ff9a92",
-     "#ffd5d1"
-    ]
-   },
-   "night": {
+   "ink": {
     "role": "neutral",
-    "displayName": "Ink night",
+    "displayName": "Ink",
     "tonalRamp": [
-     "#0a1120",
-     "#0e1728",
-     "#131d30",
-     "#1b273d",
-     "#27344c",
-     "#3a4a66",
-     "#7a89a3",
-     "#edf1f7"
+     "#0a0a0a",
+     "#262626",
+     "#3d3d3d",
+     "#5f5f5f",
+     "#767676",
+     "#a3a3a3",
+     "#dcdcda",
+     "#f7f7f6"
+    ]
+   },
+   "cream": {
+    "role": "neutral",
+    "displayName": "Cream",
+    "tonalRamp": [
+     "#5c4f33",
+     "#7d6c48",
+     "#a08d63",
+     "#c2ae84",
+     "#ddcba6",
+     "#e9dcc0",
+     "#f4ecdc",
+     "#faf6ee"
     ]
    }
   },
@@ -94,32 +52,33 @@
     "displayName": "Page title",
     "purpose": "One per screen."
    },
-   "card-title": {
-    "displayName": "Card title",
-    "purpose": "Offer and application titles."
-   },
-   "badge-number": {
-    "displayName": "Badge numeral",
-    "purpose": "Score inside the line badge, tabular."
+   "mono": {
+    "displayName": "Mono data",
+    "purpose": "Match %, dates, sources, statuses."
    }
   },
   "shadows": [
    {
-    "name": "toast",
-    "value": "0 10px 30px rgb(0 0 0 / 0.45)",
-    "purpose": "Only floating toasts."
+    "name": "nav",
+    "value": "0 1px 2px rgb(0 0 0/0.04), 0 8px 24px -12px rgb(0 0 0/0.12)",
+    "purpose": "Floating desktop nav."
    },
    {
-    "name": "segmented-on",
-    "value": "0 1px 2px rgb(0 0 0 / 0.35)",
-    "purpose": "Active segmented tab."
+    "name": "card-hover",
+    "value": "0 8px 24px -16px rgb(0 0 0/0.18)",
+    "purpose": "Offer card hover."
+   },
+   {
+    "name": "toast",
+    "value": "0 12px 32px -8px rgb(0 0 0/0.35)",
+    "purpose": "Toast."
    }
   ],
   "motion": [
    {
     "name": "ease-out-expo",
     "value": "cubic-bezier(0.16, 1, 0.3, 1)",
-    "purpose": "Card rise (360ms) and station-line fill (700ms)."
+    "purpose": "Card rise 320ms."
    },
    {
     "name": "state",
@@ -128,6 +87,10 @@
    }
   ],
   "breakpoints": [
+   {
+    "name": "sm",
+    "value": "640px"
+   },
    {
     "name": "md",
     "value": "768px"
@@ -139,82 +102,81 @@
    "name": "Primary Button",
    "kind": "button",
    "refersTo": "button-primary",
-   "description": "Main action: search, upload CV, prepare CV.",
-   "html": "<button class=\"ds-btn-primary\">Avvia la ricerca</button>",
-   "css": ".ds-btn-primary{background:#f6b52e;color:#0a1120;border:0;border-radius:10px;min-height:44px;padding:0 16px;font:600 15px Overpass,system-ui,sans-serif;transition:background-color .15s}.ds-btn-primary:hover{background:#ffc855}.ds-btn-primary:focus-visible{outline:2px solid #f6b52e;outline-offset:2px}"
+   "description": "The one main action per area.",
+   "html": "<button class=\"ds-btn\">Avvia la ricerca</button>",
+   "css": ".ds-btn{background:#0a0a0a;color:#fff;border:0;border-radius:9999px;min-height:40px;padding:0 16px;font:500 14px Geist,system-ui,sans-serif;transition:background-color .15s}.ds-btn:hover{background:#2a2a2a}.ds-btn:focus-visible{outline:2px solid #0a0a0a;outline-offset:2px}"
   },
   {
    "name": "Secondary Button",
    "kind": "button",
    "refersTo": "button-secondary",
-   "description": "Annuncio, downloads, secondary actions.",
-   "html": "<button class=\"ds-btn-secondary\">Annuncio</button>",
-   "css": ".ds-btn-secondary{background:#1b273d;color:#edf1f7;border:1px solid #3a4a66;border-radius:10px;min-height:44px;padding:0 16px;font:500 15px Overpass,system-ui,sans-serif;transition:border-color .15s}.ds-btn-secondary:hover{border-color:#7a89a3;background:#223049}.ds-btn-secondary:focus-visible{outline:2px solid #f6b52e;outline-offset:2px}"
+   "description": "Annuncio, downloads.",
+   "html": "<button class=\"ds-btn2\">Annuncio</button>",
+   "css": ".ds-btn2{background:#fff;color:#0a0a0a;border:1px solid #dcdcda;border-radius:9999px;min-height:40px;padding:0 16px;font:500 14px Geist,system-ui,sans-serif}.ds-btn2:hover{border-color:#c4c4c2;background:#f7f7f6}.ds-btn2:focus-visible{outline:2px solid #0a0a0a;outline-offset:2px}"
   },
   {
    "name": "Input",
    "kind": "input",
    "refersTo": "input",
    "description": "Text fields.",
-   "html": "<input class=\"ds-input\" placeholder=\"Nome azienda\">",
-   "css": ".ds-input{background:#0e1728;color:#edf1f7;border:1px solid #3a4a66;border-radius:10px;padding:10px 12px;font:400 16px Overpass,system-ui,sans-serif;caret-color:#f6b52e;outline:none}.ds-input:hover{border-color:#7a89a3}.ds-input:focus{border-color:#f6b52e}"
+   "html": "<input class=\"ds-in\" placeholder=\"Nome azienda\">",
+   "css": ".ds-in{background:#fff;color:#0a0a0a;border:1px solid #dcdcda;border-radius:12px;padding:10px 12px;font:400 16px Geist,system-ui,sans-serif;caret-color:#d9381e;outline:none}.ds-in:hover{border-color:#c4c4c2}.ds-in:focus{border-color:#0a0a0a;box-shadow:0 0 0 3px rgb(10 10 10/.06)}"
   },
   {
-   "name": "Filter Pill",
-   "kind": "chip",
-   "refersTo": "filter-pill-on",
-   "description": "Sort and filter toggles; on = ink fill.",
-   "html": "<button class=\"ds-pill ds-on\">Punteggio AI</button> <button class=\"ds-pill\">Più recenti</button>",
-   "css": ".ds-pill{min-height:36px;padding:0 12px;border-radius:9px;border:1px solid #3a4a66;background:transparent;color:#9aa8bf;font:600 13px Overpass,system-ui,sans-serif}.ds-pill:hover{color:#edf1f7;border-color:#7a89a3}.ds-pill.ds-on{background:#edf1f7;color:#0a1120;border-color:#edf1f7}"
-  },
-  {
-   "name": "Line Badge",
+   "name": "Match Tag",
    "kind": "custom",
-   "refersTo": "line-badge-ai",
-   "description": "Score: filled = AI, outline = quick estimate from the CV.",
-   "html": "<div class=\"ds-badge\">81</div> <div class=\"ds-badge ds-quick\">64</div>",
-   "css": ".ds-badge{display:inline-grid;place-items:center;width:52px;height:52px;border-radius:12px;background:#2fc27a;color:#0a1120;font:800 22px Overpass,system-ui,sans-serif;font-variant-numeric:tabular-nums}.ds-badge.ds-quick{background:transparent;color:#f6b52e;box-shadow:inset 0 0 0 2.5px #f6b52e}"
+   "refersTo": "match-tag",
+   "description": "AI match vs quick estimate.",
+   "html": "<span class=\"ds-m\">81% match</span> <span class=\"ds-m ds-q\">64% stima</span>",
+   "css": ".ds-m{display:inline-flex;gap:4px;border:1px solid rgb(217 56 30/.4);background:rgb(217 56 30/.06);color:#d9381e;border-radius:9999px;padding:2px 8px;font:400 11px 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase}.ds-m.ds-q{border:1px dashed #dcdcda;background:transparent;color:#5f5f5f}"
   },
   {
    "name": "Card",
    "kind": "card",
    "refersTo": "card",
-   "description": "Offer, application and settings containers.",
+   "description": "Offers and applications.",
    "html": "<article class=\"ds-card\"><h3>Backend Engineer Python</h3><p>Brightfield ∙ Berlino</p></article>",
-   "css": ".ds-card{background:#131d30;border:1px solid #27344c;border-radius:14px;padding:16px;color:#edf1f7;font:400 15px Overpass,system-ui,sans-serif;transition:border-color .15s}.ds-card:hover{border-color:#3a4a66}.ds-card h3{margin:0;font-weight:700;font-size:18px}.ds-card p{margin:4px 0 0;color:#b8c3d5}"
+   "css": ".ds-card{background:#fff;border:1px solid #ebebea;border-radius:16px;padding:16px;font:400 15px Geist,system-ui,sans-serif;transition:border-color .15s,box-shadow .15s}.ds-card:hover{border-color:#dcdcda;box-shadow:0 8px 24px -16px rgb(0 0 0/.18)}.ds-card h3{margin:0;font-weight:600;font-size:17px;letter-spacing:-.015em}.ds-card p{margin:2px 0 0;color:#5f5f5f}"
+  },
+  {
+   "name": "Filter Pill",
+   "kind": "chip",
+   "refersTo": "filter-pill-on",
+   "description": "Sort and filters.",
+   "html": "<button class=\"ds-p ds-on\">Punteggio AI</button> <button class=\"ds-p\">Più recenti</button>",
+   "css": ".ds-p{min-height:32px;padding:0 12px;border-radius:9999px;border:1px solid #dcdcda;background:#fff;color:#3d3d3d;font:500 13px Geist,system-ui,sans-serif}.ds-p:hover{color:#0a0a0a;border-color:#c4c4c2}.ds-p.ds-on{background:#0a0a0a;border-color:#0a0a0a;color:#fff}"
   }
  ],
  "narrative": {
-  "northStar": "Linea della metro",
-  "overview": "The job hunt drawn as a transit line. Every offer is a stop you may board; every application is a ride with stations: Trovata, Inviata, Colloquio, Offerta.",
+  "northStar": "Il punto sul radar",
+  "overview": "A calm, light working tool. White ground, near-black ink, and one coral that always means \"this matters\": a new offer, a strong match, the live dot.",
   "keyCharacteristics": [
-   "Dark always: ink blue-black ground, a cooler raised layer for cards.",
-   "Colour means state, never decoration. Each state owns a line colour.",
-   "Scores are line badges: rounded squares with a heavy numeral.",
-   "One family, heavy weights for titles, tabular numerals for counts."
+   "Light always: white ground, hairline borders, cream only for summary panels.",
+   "One accent, coral, used for meaning, never decoration.",
+   "Mono for data (match %, dates, sources, statuses), sans for everything people read.",
+   "Black pill for the one primary action per area."
   ],
   "rules": [
    {
-    "name": "The Line Colour Rule",
-    "body": "A colour on screen names a state. If something is green it is a strong match or a positive outcome; amber is new or the next action; nothing is tinted for decoration.",
+    "name": "The One Coral Rule",
+    "body": "Coral marks what deserves attention right now. If two coral things compete on one card, one of them is wrong.",
     "section": "colors"
    },
    {
-    "name": "The Middle Dot Rule",
-    "body": "Overpass draws · (U+00B7) with broken spacing; separators use ∙ (U+2219).",
+    "name": "The Mono Is Data Rule",
+    "body": "Mono carries numbers, dates, sources and statuses. It never sits above a heading as an eyebrow.",
     "section": "typography"
    }
   ],
   "dos": [
-   "Do give every state its line colour and keep it consistent across pages.",
-   "Do show why an offer scored as it did (\"Dal tuo CV:\" title + skills).",
-   "Do keep controls standard: tabs, selects, buttons, inputs."
+   "Do keep coral for new, strong and live; everything else is ink and grey.",
+   "Do put numbers, dates and sources in mono.",
+   "Do show why an offer matches (\"Dal tuo CV\" + chips)."
   ],
   "donts": [
-   "Don't add colour for decoration or gradients.",
-   "Don't use · with Overpass; use ∙.",
-   "Don't use eyebrow labels above headings or emoji as icons.",
-   "Don't turn the transit theme into costume (maps, ticket stubs, station signage as layout)."
+   "Don't bring back a dark theme, multi-colour fills, heavy display weights or decorative state badges: the owner rejected them.",
+   "Don't use mono labels as eyebrows above headings.",
+   "Don't copy the reference site's logo, illustrations or copy."
   ]
  }
 }

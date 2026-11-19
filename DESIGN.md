@@ -1,60 +1,72 @@
 ---
 name: JobRadar
-description: Personal job-search PWA, dark, built like a transit line.
+description: Personal job-search PWA, light and calm, one coral accent.
 colors:
-  night: "#0a1120"
-  rail: "#0e1728"
-  panel: "#131d30"
-  panel-2: "#1b273d"
-  line: "#27344c"
-  line-strong: "#3a4a66"
-  ink: "#edf1f7"
-  muted: "#9aa8bf"
-  faint: "#7a89a3"
-  signal: "#f6b52e"
-  signal-strong: "#ffc855"
-  good: "#2fc27a"
-  sky: "#4c97f5"
-  violet: "#a184f4"
-  bad: "#f0645a"
+  white: "#ffffff"
+  rail: "#f7f7f6"
+  panel-2: "#f3f3f2"
+  line: "#ebebea"
+  line-strong: "#dcdcda"
+  cream: "#f4ecdc"
+  ink: "#0a0a0a"
+  muted: "#5f5f5f"
+  faint: "#767676"
+  coral: "#d9381e"
+  coral-mark: "#e5432a"
+  good: "#15803d"
+  amber: "#b45309"
+  bad: "#b91c1c"
+  sky: "#2563eb"
+  violet: "#6d28d9"
 typography:
   page-title:
-    fontFamily: "Overpass, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "30px"
-    fontWeight: 800
-    lineHeight: 1.05
-    letterSpacing: "-0.025em"
+    fontFamily: "Geist, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "28px"
+    fontWeight: 600
+    lineHeight: 1.1
+    letterSpacing: "-0.03em"
+  page-title-wide:
+    fontFamily: "Geist, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "34px"
+    fontWeight: 600
+    lineHeight: 1.1
+    letterSpacing: "-0.03em"
   card-title:
-    fontFamily: "Overpass, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "18px"
-    fontWeight: 700
+    fontFamily: "Geist, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "17px"
+    fontWeight: 600
     lineHeight: 1.35
-    letterSpacing: "-0.01em"
+    letterSpacing: "-0.015em"
   section-title:
-    fontFamily: "Overpass, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "Geist, ui-sans-serif, system-ui, sans-serif"
     fontSize: "18px"
-    fontWeight: 700
+    fontWeight: 600
     lineHeight: 1.3
   body:
-    fontFamily: "Overpass, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "Geist, ui-sans-serif, system-ui, sans-serif"
     fontSize: "15px"
     fontWeight: 400
     lineHeight: 1.6
+  control:
+    fontFamily: "Geist, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "14px"
+    fontWeight: 500
+    lineHeight: 1.2
   label:
-    fontFamily: "Overpass, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "Geist, ui-sans-serif, system-ui, sans-serif"
     fontSize: "13px"
-    fontWeight: 600
+    fontWeight: 500
     lineHeight: 1.4
-  badge-number:
-    fontFamily: "Overpass, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "22px"
-    fontWeight: 800
-    lineHeight: 1
+  mono:
+    fontFamily: "Geist Mono, ui-monospace, monospace"
+    fontSize: "11px"
+    fontWeight: 400
+    lineHeight: 1.4
+    letterSpacing: "0.1em"
 rounded:
-  tag: "6px"
-  control: "10px"
-  badge: "12px"
-  card: "14px"
+  control: "9999px"
+  field: "12px"
+  card: "16px"
 spacing:
   xs: "6px"
   sm: "8px"
@@ -63,134 +75,131 @@ spacing:
   xl: "20px"
 components:
   button-primary:
-    backgroundColor: "{colors.signal}"
-    textColor: "{colors.night}"
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.white}"
     rounded: "{rounded.control}"
-    height: "44px"
+    height: "40px"
     padding: "0 16px"
   button-primary-hover:
-    backgroundColor: "{colors.signal-strong}"
+    backgroundColor: "#2a2a2a"
   button-secondary:
-    backgroundColor: "{colors.panel-2}"
+    backgroundColor: "{colors.white}"
     textColor: "{colors.ink}"
     rounded: "{rounded.control}"
-    height: "44px"
+    height: "40px"
     padding: "0 16px"
-  button-success:
-    backgroundColor: "{colors.good}"
-    textColor: "{colors.night}"
-    rounded: "{rounded.control}"
-    height: "44px"
   input:
-    backgroundColor: "{colors.rail}"
+    backgroundColor: "{colors.white}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.control}"
+    rounded: "{rounded.field}"
     padding: "10px 12px"
   card:
-    backgroundColor: "{colors.panel}"
+    backgroundColor: "{colors.white}"
     rounded: "{rounded.card}"
     padding: "16px"
+  chip:
+    backgroundColor: "{colors.white}"
+    textColor: "#3d3d3d"
+    rounded: "{rounded.control}"
+    padding: "2px 10px"
   filter-pill-on:
     backgroundColor: "{colors.ink}"
-    textColor: "{colors.night}"
-    rounded: "9px"
-    height: "36px"
-  line-badge-ai:
-    backgroundColor: "{colors.good}"
-    textColor: "{colors.night}"
-    typography: "{typography.badge-number}"
-    rounded: "{rounded.badge}"
-    size: "52px"
+    textColor: "{colors.white}"
+    rounded: "{rounded.control}"
+    height: "32px"
+  match-tag:
+    textColor: "{colors.coral}"
+    typography: "{typography.mono}"
+    rounded: "{rounded.control}"
+    padding: "2px 8px"
+  summary-panel:
+    backgroundColor: "{colors.cream}"
+    rounded: "{rounded.card}"
+    padding: "20px"
 ---
 
 # Design System: JobRadar
 
 ## Overview
 
-**Creative North Star: "Linea della metro"**
+**Creative North Star: "Il punto sul radar"**
 
-The job hunt drawn as a transit line. Every offer is a stop you may board; every application is a ride with stations: Trovata, Inviata, Colloquio, Offerta. The world lends the app four things only: one signage typeface (Overpass, the highway-sign grotesk), an ink blue-black ground, line colours that carry state, and the station line as its signature move. Navigation, tabs, buttons and inputs stay the standard ones; this is a tool used every day on the phone and in long desktop sessions.
+A calm, light working tool. White ground, near-black ink, and one coral that always means "this matters": a new offer, a strong match, the live dot. Text is Geist; data and status speak in small, tracked Geist Mono. Controls are black or outlined pills. The owner chose this language from a reference site (www.job-radar.io) after rejecting a dark, multi-colour "transit line" direction as heavy: the lesson is restraint.
 
 **Key Characteristics:**
-- Dark always: ink blue-black ground, a cooler raised layer for cards.
-- Colour means state, never decoration. Each state owns a line colour.
-- Scores are line badges: rounded squares with a heavy numeral.
-- One family, heavy weights for titles, tabular numerals for counts.
+- Light always: white ground, hairline borders, cream only for summary panels.
+- One accent, coral, used for meaning, never decoration.
+- Mono for data (match %, dates, sources, statuses), sans for everything people read.
+- Black pill for the one primary action per area.
 
 ## Colors
 
 ### Primary
-- **Amber blip** (`signal`, #f6b52e): the radar's blip. Primary action, "Nuova", active nav marker, focus ring, mid-range score.
-
-### Line colours (state)
-- **Green** (`good`, #2fc27a): strong match (score ≥ 70), "Candidato", Offerta stage, "CV pronto", central CV skills.
-- **Blue** (`sky`, #4c97f5): Inviata stage, titles taken from the CV, search keywords.
-- **Violet** (`violet`, #a184f4): Colloquio stage.
-- **Red** (`bad`, #f0645a): Rifiutato, gaps and obstacles, chance bassa.
-
-On tinted chips the text is a lighter tint of the same hue (#8dbcff on blue, #c3b1ff on violet, #7fe0ad on green, #ff9a92 on red), never grey.
+- **Coral** (`coral`, #d9381e for text, `coral-mark` #e5432a for dots and rings): new offers, the live dot, strong AI match (≥ 70), the active nav dot, the caret.
 
 ### Neutral
-- `night` page ground, `rail` inset fields and wells, `panel` cards, `panel-2` raised controls, `line` / `line-strong` hairlines and control borders.
-- Text: `ink` primary, `muted` secondary (≥ 7:1 on night), `faint` tertiary and placeholders.
+- `white` ground and cards, `rail` for wells (tailored CV box), `panel-2` for tab tracks and hover, `line` / `line-strong` hairlines and control borders, `cream` for summary panels (evaluation report, follow-ups, search result).
+- Text: `ink` primary, `muted` secondary (6.4:1), `faint` tertiary and mono meta (4.5:1).
+
+### State dots
+- Small dots only, never fills: `good` chance alta / offerta, `amber` chance media / notes, `bad` chance bassa / rifiutato, `sky` inviata, `violet` colloquio.
 
 ### Named Rules
-**The Line Colour Rule.** A colour on screen names a state. If something is green it is a strong match or a positive outcome; amber is new or the next action; nothing is tinted for decoration.
+**The One Coral Rule.** Coral marks what deserves attention right now. If two coral things compete on one card, one of them is wrong.
 
 ## Typography
 
-One family: Overpass (self-hosted via next/font). Titles in 700–800 with slight negative tracking, body 400 at 15px, labels 600 at 13px, badges 800 with tabular numerals.
+Geist for all reading text; Geist Mono for data and status at 11px, uppercase, 0.1em tracking.
 
 ### Hierarchy
-- Page title 30px / 800, card title 18px / 700, section title 18px / 700, body 15px, meta 12–13px.
+- Page title 28px (34px from `sm`) / 600 / -0.03em; card title 17px / 600; section title 18px / 600; body 15px; controls 14px / 500; labels 13px / 500; mono 11px.
 
 ### Named Rules
-**The Middle Dot Rule.** Overpass draws `·` (U+00B7) with broken spacing; separators use `∙` (U+2219).
+**The Mono Is Data Rule.** Mono carries numbers, dates, sources and statuses. It never sits above a heading as an eyebrow.
 
 ## Layout
 
-Single column, max width 896px (`max-w-4xl`), 16px side gutter. Mobile: sticky top bar plus fixed bottom tab bar (5 sections). Desktop: the same top bar with inline nav. Cards stack with 12px gaps; inside a card, tight groups (6–8px) and 12px between groups.
+Single column, max width 896px, 16px gutter. Desktop: a floating white pill nav (border + soft shadow) with the active section in a black pill. Mobile: white top bar, white bottom tab bar with a coral dot on the active icon. Cards stack with 12px gaps; inside a card, 14px between groups.
 
 ## Elevation & Depth
 
-Flat: depth comes from layer colour (night → panel → panel-2), not shadows. Shadows only on things that float: the toast (0 10px 30px rgb(0 0 0 / 0.45)) and the active segmented tab (0 1px 2px).
+Flat by default: hairline borders. Shadows only on things that float or invite a click: the desktop nav, the active tab, card hover (0 8px 24px -16px), the toast, the sticky save button.
 
 ## Shapes
 
-Tags 6px, controls 10px, line badges 12px, cards 14px. Station dots are circles on a 3px line.
+Pills for every control, chip and tag; 12px for fields; 16px for cards and panels.
 
 ## Components
 
 ### Buttons
-Primary amber with ink-night text; secondary panel-2 with a `line-strong` border; success green ("Candidato"); ghost text-only; 44px minimum height everywhere, icon buttons 44×44.
+Primary black pill with white text; secondary white pill with `line-strong` border; ghost text-only; icon buttons 40px circles. "Candidato" uses the primary.
 
 ### Chips
-Small rounded rectangles (6px), panel-2 background for neutral facts (mode, salary), tinted line colour for state.
+Outlined pills. A chip outlined in ink is the strongest item (matched CV title, central skill filled ink).
 
 ### Cards / Containers
-Panel background, 1px `line` border, 14px radius, 16px padding. Unseen offers sit on a slightly lighter panel (#152036). Hover lifts the border to `line-strong`.
+White, 1px `line`, 16px radius, 16–20px padding. Summary panels are cream with no border.
 
 ### Inputs / Fields
-Rail background, `line-strong` border, amber border and caret on focus, 16px text (no iOS zoom).
+White, `line-strong` border, ink border plus a 3px soft ring on focus, coral caret, 16px text.
 
 ### Navigation
-Top bar 56px with the radar mark; the active item gets a 3px amber bar (under the label on desktop, above the icon on mobile).
+See Layout. The radar mark: grey rings, coral sweep and blip, ink centre.
 
-### Line Badge (signature)
-The score. Filled in the band's line colour when the AI has evaluated the offer; a 2.5px outline in the same colour when it is only the quick estimate from the CV. Caption under it: "AI" or "stima".
+### Match Tag (signature)
+"81% MATCH" in mono inside a pill. AI-scored: coral text on a coral-tinted pill when strong, ink when below 70. Quick estimate from the CV: dashed outline, "64% STIMA" in muted.
 
-### Station Line (signature)
-A 3px rail with circular stations; reached stations fill with the line colour, the current one is hollow with a thicker ring, a stopped ride shows an ×. Used for each application (Trovata → Inviata → Colloquio → Offerta) and for the search run (Fonti → Filtri → Punteggio → Offerte).
+### Radar Rings (signature)
+Faint coral rings with one sweep and two blips behind the Offerte header, desktop only.
 
 ## Do's and Don'ts
 
 ### Do:
-- Do give every state its line colour and keep it consistent across pages.
-- Do show why an offer scored as it did ("Dal tuo CV:" title + skills).
-- Do keep controls standard: tabs, selects, buttons, inputs.
+- Do keep coral for new, strong and live; everything else is ink and grey.
+- Do put numbers, dates and sources in mono.
+- Do show why an offer matches ("Dal tuo CV" + chips).
 
 ### Don't:
-- Don't add colour for decoration or gradients.
-- Don't use `·` with Overpass; use `∙`.
-- Don't use eyebrow labels above headings or emoji as icons.
-- Don't turn the transit theme into costume (maps, ticket stubs, station signage as layout).
+- Don't bring back a dark theme, multi-colour fills, heavy display weights or decorative state badges: the owner rejected them.
+- Don't use mono labels as eyebrows above headings.
+- Don't copy the reference site's logo, illustrations or copy.

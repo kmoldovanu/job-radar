@@ -151,7 +151,7 @@ Per attivarla:
 - **Mai sovrascrivere**: una nuova ricerca non ripropone né modifica offerte a cui ti sei candidato o che hai scartato. Lo stesso annuncio trovato su più fonti viene salvato una volta sola (chiave azienda + titolo).
 - Ogni fonte è un modulo in `src/lib/sources/` con una funzione `parse()` pura e testata; tutto viene normalizzato nel tipo `Job` (`src/lib/types.ts`).
 - I filtri sono in `src/lib/filters/`, il controllo anti-invenzioni in `src/lib/ai/guard.ts`.
-- **Stile**: "Linea della metro", descritto in `DESIGN.md` (prodotto in `PRODUCT.md`). Tema scuro inchiostro, carattere Overpass, colori di linea per gli stati, punteggio come badge di una linea (pieno = AI, contorno = stima dal CV), candidature come linea con le fermate.
+- **Stile**: chiaro, descritto in `DESIGN.md` (prodotto in `PRODUCT.md`): fondo bianco, un solo accento corallo, Geist e Geist Mono, bottoni neri a pillola, match come "81% MATCH" (corallo = AI, tratteggiato = stima dal CV).
 
 ## Struttura
 
