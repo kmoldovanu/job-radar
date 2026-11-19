@@ -26,6 +26,8 @@ export class AiRefusalError extends Error {}
 export async function structuredCall<T extends z.ZodType>(opts: {
   model: string;
   system: string;
+  /** testo lungo e uguale tra le chiamate (es. il CV): va nel system prompt con la cache del prompt */
+  cachedContext?: string;
   user: string;
   schema: T;
   maxTokens?: number;
@@ -35,7 +37,12 @@ export async function structuredCall<T extends z.ZodType>(opts: {
   const base = {
     model: opts.model,
     max_tokens: opts.maxTokens ?? 8000,
-    system: opts.system,
+    system: opts.cachedContext
+      ? [
+          { type: "text" as const, text: opts.system },
+          { type: "text" as const, text: opts.cachedContext, cache_control: { type: "ephemeral" as const } },
+        ]
+      : opts.system,
     messages: [{ role: "user" as const, content: opts.user }],
     output_config: {
       format: zodOutputFormat(opts.schema),

@@ -1,21 +1,13 @@
 import type { Job, MatchDetails, Profile } from "../types";
+import { cvSkills, cvTitles, skillForms, titleSimilarity } from "../cv/signals";
 import { hasWord, normalize } from "./geo";
-
-const STOP = new Set(["and", "or", "of", "the", "a", "an", "e", "di", "de", "der", "die", "und", "for", "in", "m", "f", "w", "d", "x"]);
-
-function tokens(s: string): string[] {
-  return normalize(s)
-    .replace(/[^a-z0-9+#.]+/g, " ")
-    .split(" ")
-    .map((t) => t.replace(/^\.+|\.+$/g, ""))
-    .filter((t) => t.length > 1 && !STOP.has(t));
-}
 
 const SENIORITY: { level: number; label: string; re: RegExp }[] = [
   { level: 0, label: "stage", re: /\b(intern|internship|stage|stagiaire|praktikum|praktikant|tirocinio|trainee|werkstudent|working student)\b/ },
   { level: 1, label: "junior", re: /\b(junior|jr|entry[- ]level|graduate|associate|apprentice)\b/ },
-  { level: 3, label: "senior", re: /\b(senior|sr|experienced)\b/ },
-  { level: 4, label: "lead", re: /\b(lead|staff|principal|architect|manager|team lead)\b/ },
+  { level: 3, label: "senior", re: /\b(senior|sr|experienced|architect)\b/ },
+  // "manager" da solo non è un livello (Project/Account/Marketing Manager): lo è "engineering manager", "senior manager"…
+  { level: 4, label: "lead", re: /\b(lead|staff|principal|team lead|tech lead|engineering manager|senior manager|group manager)\b/ },
   { level: 5, label: "direttivo", re: /\b(head of|director|vp|vice president|chief|cto|ceo|cfo|coo|cio|partner)\b/ },
 ];
 const PROFILE_LEVEL: Record<Profile["preferences"]["seniority"], number> = { junior: 1, mid: 2, senior: 3, lead: 4 };
@@ -43,60 +35,80 @@ export function yearsRequired(text: string): number | null {
   return max;
 }
 
-/** Punteggio rapido 0-100 senza AI. */
+/**
+ * Punteggio rapido 0-100 senza AI, calcolato sul CV (indice del CV + esperienze + competenze),
+ * non solo sui ruoli scritti nelle preferenze.
+ *
+ * - Titolo (max 40): somiglianza con i titoli del CV, con sinonimi e traduzioni (sviluppatore = developer = engineer).
+ * - Competenze (max 30, o 40 senza parole chiave): competenze del CV trovate nell'annuncio, con i loro sinonimi; quelle centrali pesano di più.
+ * - Settori e parole chiave del CV (max 10).
+ * - Seniority (−15 … +10) e anni richiesti (−15 … +10).
+ * - Parole escluse: −15 ciascuna.
+ */
 export function quickMatch(job: Pick<Job, "title" | "description" | "tags">, profile: Profile): MatchDetails {
   const prefs = profile.preferences;
   const notes: string[] = [];
-  const title = normalize(job.title);
-  const body = normalize(`${job.title}\n${job.tags.join(" ")}\n${job.description}`);
+  const body = normalize(`${job.title}\n${job.tags.join(" ")}\n${job.description}`).replace(/\bfront[\s-]?end\b/g, "frontend").replace(/\bback[\s-]?end\b/g, "backend").replace(/\bfull[\s-]?stack\b/g, "fullstack");
 
-  // 1. Titolo vs ruoli cercati (max 40)
-  let titleScore = 0;
-  const titleTokens = new Set(tokens(job.title));
-  for (const role of prefs.targetRoles) {
-    const rt = tokens(role);
-    if (!rt.length) continue;
-    if (hasWord(title, normalize(role).trim())) {
-      titleScore = 1;
-      break;
+  // 1. Titolo vs titoli del CV (max 40)
+  const titles = cvTitles(profile);
+  let titleScore = titles.length ? 0 : 0.5;
+  let titleMatch: string | null = null;
+  for (const t of titles) {
+    const sim = titleSimilarity(job.title, t.title) * t.weight;
+    if (sim > titleScore) {
+      titleScore = sim;
+      titleMatch = t.title;
     }
-    const hit = rt.filter((t) => titleTokens.has(t)).length / rt.length;
-    titleScore = Math.max(titleScore, hit);
   }
-  if (!prefs.targetRoles.length) titleScore = 0.5;
   let score = Math.round(titleScore * 40);
 
-  // 2. Competenze trovate (max 30)
-  const skillsFound = profile.skills.filter((s) => {
-    const n = normalize(s).trim();
-    return n.length > 1 && hasWord(body, n);
-  });
-  score += Math.round(Math.min(skillsFound.length / 6, 1) * 30);
+  // 2. Competenze del CV trovate nell'annuncio (max 30, 40 se il CV non ha settori/parole chiave): 5 punti "pieni" bastano
+  const idx = profile.cvIndex;
+  const kwList = [...(idx?.domains ?? []), ...(idx?.keywords ?? [])];
+  const skillMax = kwList.length ? 30 : 40;
+  const skills = cvSkills(profile);
+  const skillsFound: string[] = [];
+  let skillPoints = 0;
+  for (const s of skills) {
+    if (skillForms(s).some((f) => hasWord(body, f))) {
+      skillsFound.push(s.name);
+      skillPoints += s.weight === 3 ? 1.5 : s.weight === 1 ? 0.6 : 1;
+    }
+  }
+  score += Math.round(Math.min(skillPoints / 5, 1) * skillMax);
 
-  // 3. Seniority (−15 … +15)
+  // 3. Settori e parole chiave del CV (max 10)
+  const keywordsFound = kwList.filter((k) => {
+    const n = normalize(k).trim();
+    return n.length > 2 && hasWord(body, n);
+  });
+  score += Math.round(Math.min(keywordsFound.length / 4, 1) * 10);
+
+  // 4. Seniority (−15 … +10)
   const sen = jobSeniority(job.title);
   const mine = PROFILE_LEVEL[prefs.seniority];
   if (sen) {
     const diff = sen.level - mine;
-    if (diff === 0) score += 15;
-    else if (Math.abs(diff) === 1) score += 7;
+    if (diff === 0) score += 10;
+    else if (Math.abs(diff) === 1) score += 5;
     else {
       score -= 15;
       notes.push(diff > 0 ? `Ruolo troppo senior (${sen.label})` : `Ruolo troppo junior (${sen.label})`);
     }
-  } else score += 10;
+  } else score += 8;
 
-  // 4. Anni di esperienza richiesti (−20 … +15)
+  // 5. Anni di esperienza richiesti (−15 … +10)
   const years = yearsRequired(job.description);
-  if (years == null) score += 8;
-  else if (years <= prefs.yearsExperience) score += 15;
-  else if (years <= prefs.yearsExperience + 2) score += 5;
+  if (years == null) score += 6;
+  else if (years <= prefs.yearsExperience) score += 10;
+  else if (years <= prefs.yearsExperience + 2) score += 4;
   else {
-    score -= 20;
+    score -= years > prefs.yearsExperience + 4 ? 15 : 8;
     notes.push(`Richiede ${years}+ anni (tu ne hai ${prefs.yearsExperience})`);
   }
 
-  // 5. Parole da escludere nel testo (il titolo è gestito come scarto)
+  // 6. Parole da escludere nel testo (il titolo è gestito come scarto)
   const excluded = prefs.excludeKeywords.filter((k) => k.trim() && hasWord(body, normalize(k).trim()));
   if (excluded.length) {
     score -= 15 * excluded.length;
@@ -105,8 +117,10 @@ export function quickMatch(job: Pick<Job, "title" | "description" | "tags">, pro
 
   return {
     score: Math.max(0, Math.min(100, score)),
-    titleScore: Math.round(titleScore * 100),
+    titleScore: Math.round(Math.min(1, titleScore) * 100),
+    titleMatch,
     skillsFound,
+    keywordsFound: keywordsFound.slice(0, 12),
     jobSeniority: sen?.label ?? null,
     yearsRequired: years,
     notes,

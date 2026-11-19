@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Icon } from "@/components/Icon";
-import { ErrorBox, PageHeader, Progress } from "@/components/ui";
+import { Icon, RadarMark } from "@/components/Icon";
+import { ErrorBox, PageHeader, Progress, StationLine } from "@/components/ui";
 import { api } from "@/lib/client";
+import { searchQueries } from "@/lib/cv/signals";
 import { runQueue } from "@/lib/queue";
 import { REJECT_LABELS, type Profile, type RejectReason, type Settings } from "@/lib/types";
 
@@ -86,7 +87,7 @@ export default function SearchPage() {
     setEvalInfo("");
     try {
       const { tasks, hasRoles } = await api<{ tasks: Task[]; hasRoles: boolean }>("/api/search/tasks");
-      if (!hasRoles) setError("Suggerimento: aggiungi i ruoli che cerchi nel Profilo per risultati più pertinenti.");
+      if (!hasRoles) setError("Suggerimento: carica il tuo CV nel Profilo. Senza, la ricerca non sa cosa cercare e i risultati sono generici.");
       if (!tasks.length) throw new Error("Nessuna fonte attiva: controlla le Impostazioni");
       setStatuses(tasks.map((t) => ({ label: t.label, state: "attesa", info: "" })));
       const agg = { fetched: 0, inserted: 0, rejected: {} as Partial<Record<RejectReason, number>>, samples: [] as Rejection[] };
@@ -122,7 +123,7 @@ export default function SearchPage() {
 
       // Valutazione AI come scelto sopra (una chiamata per offerta)
       const { ids, ai, scope } = await api<{ ids: string[]; ai: boolean; scope?: AutoEval }>("/api/jobs/pending-eval?scope=auto");
-      if (!ai) setEvalInfo("Valutazione AI non attiva (manca ANTHROPIC_API_KEY): le offerte hanno solo il punteggio rapido.");
+      if (!ai) setEvalInfo("Valutazione AI non attiva (manca ANTHROPIC_API_KEY): le offerte hanno solo la stima rapida dal CV.");
       else if (scope === "off") setEvalInfo("Valutazione AI saltata, come scelto. Puoi lanciarla dopo da Offerte, in Strumenti AI.");
       else if (ids.length) {
         setProgress({ label: "Valutazione AI", done: 0, total: ids.length });
@@ -148,6 +149,8 @@ export default function SearchPage() {
 
   const totalRejected = summary ? Object.values(summary.rejected).reduce((a, b) => a + (b ?? 0), 0) : 0;
   const prefs = profile?.preferences;
+  // stesse parole che la ricerca manda alle fonti (src/lib/cv/signals.ts)
+  const queries = profile ? searchQueries(profile) : null;
   const auto = settings?.autoEvaluate ?? "top";
 
   return (
@@ -162,15 +165,36 @@ export default function SearchPage() {
         {prefs ? (
           <dl className="space-y-2.5 text-sm">
             <div>
-              <dt className="text-muted">Ruoli</dt>
-              <dd className="mt-1 flex flex-wrap gap-1.5">
-                {prefs.targetRoles.length ? (
-                  prefs.targetRoles.map((r) => <span key={r} className="chip text-[13px]">{r}</span>)
+              <dt className="text-muted">Parole cercate sulle fonti {profile?.cvIndex ? "(dal tuo CV e dai ruoli che hai scritto)" : ""}</dt>
+              <dd className="mt-1.5 flex flex-wrap gap-1.5">
+                {queries?.length ? (
+                  queries.map((r) => (
+                    <span key={r} className="rounded-md bg-sky/15 px-2 py-0.5 text-[13px] font-semibold text-[#8dbcff]">{r}</span>
+                  ))
+                ) : queries ? (
+                  <Link href="/profilo" className="text-signal underline">
+                    {profile?.cvIndex
+                      ? "Scrivi nel Profilo i ruoli che cerchi: senza AI non ricavo i titoli dal CV"
+                      : "Carica il tuo CV: senza, i risultati sono generici"}
+                  </Link>
                 ) : (
-                  <Link href="/profilo" className="text-signal underline">Aggiungi i ruoli che cerchi: senza, i risultati sono generici</Link>
+                  <span className="text-muted">…</span>
                 )}
               </dd>
             </div>
+            {profile?.cvIndex && profile.cvIndex.skills.length > 0 && (
+              <div>
+                <dt className="text-muted">Il punteggio cerca nell&apos;annuncio {profile.cvIndex.skills.length} competenze del CV, tra cui</dt>
+                <dd className="mt-1.5 flex flex-wrap gap-1.5">
+                  {[...profile.cvIndex.skills]
+                    .sort((a, b) => b.weight - a.weight)
+                    .slice(0, 8)
+                    .map((sk) => (
+                      <span key={sk.name} className="chip text-[13px]">{sk.name}</span>
+                    ))}
+                </dd>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <dt className="text-muted">Modalità</dt>
@@ -187,7 +211,7 @@ export default function SearchPage() {
               <div>
                 <dt className="text-muted">Fonti</dt>
                 <dd>
-                  {taskCount ?? "…"} richieste · <Link href="/impostazioni" className="text-signal">cambia</Link>
+                  {taskCount ?? "…"} richieste ∙ <Link href="/impostazioni" className="text-signal">cambia</Link>
                 </dd>
               </div>
             </div>
@@ -206,20 +230,20 @@ export default function SearchPage() {
       <section className="card space-y-3" aria-labelledby="ai">
         <h2 id="ai" className="text-lg font-semibold">Chi dà il punteggio</h2>
         <p className="text-sm text-muted">
-          Ogni offerta riceve subito un <b className="font-semibold text-ink">punteggio rapido</b>, gratis, confrontando titolo e competenze con il tuo profilo.
+          Ogni offerta riceve subito una <b className="font-semibold text-ink">stima rapida</b>, gratis, confrontando l&apos;annuncio con il tuo CV: titoli, competenze (anche tradotte) e settori.
           L&apos;<b className="font-semibold text-ink">AI</b> invece legge tutto l&apos;annuncio come un recruiter: punteggio più affidabile,
           chance, punti di forza e cosa manca. Costa una chiamata per offerta (circa 3–5 secondi l&apos;una, 4 in parallelo).
         </p>
         {!aiKey && settings && (
-          <p className="rounded-xl border border-line bg-night p-3 text-sm text-muted">
-            L&apos;AI non è attiva: manca ANTHROPIC_API_KEY. Per ora le offerte avranno solo il punteggio rapido.
+          <p className="rounded-[10px] bg-rail p-3 text-sm text-muted">
+            L&apos;AI non è attiva: manca ANTHROPIC_API_KEY. Per ora le offerte avranno solo la stima rapida dal CV.
           </p>
         )}
         <div role="radiogroup" aria-label="Valutazione AI dopo la ricerca" className="space-y-2">
           {(
             [
-              ["off", "Solo punteggio rapido", "Più veloce. Puoi chiedere all'AI dopo, offerta per offerta."],
-              ["top", `AI sulle migliori ${settings?.aiEvaluateTop ?? 40}`, "Consigliato: l'AI valuta solo le offerte con il punteggio rapido più alto."],
+              ["off", "Solo stima rapida", "Più veloce. Puoi chiedere all'AI dopo, offerta per offerta."],
+              ["top", `AI sulle migliori ${settings?.aiEvaluateTop ?? 40}`, "Consigliato: l'AI valuta solo le offerte con la stima rapida più alta."],
               ["all", "AI su tutte le nuove", "Fino a 100 offerte per ricerca. Più lento, ma nessuna offerta resta senza giudizio."],
             ] as const
           ).map(([v, title, desc]) => {
@@ -231,7 +255,7 @@ export default function SearchPage() {
                 aria-checked={on}
                 disabled={!settings || !aiKey}
                 onClick={() => setAutoEval(v)}
-                className={`flex w-full items-start gap-3 rounded-xl border p-3 text-left transition-colors disabled:opacity-50 ${on ? "border-signal/60 bg-signal/8" : "border-line hover:border-slate-600"}`}
+                className={`flex w-full items-start gap-3 rounded-[10px] border p-3 text-left transition-colors duration-150 disabled:opacity-50 ${on ? "border-signal bg-signal/10" : "border-line-strong hover:border-faint"}`}
               >
                 <span className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border-2 ${on ? "border-signal" : "border-slate-600"}`}>
                   {on && <span className="size-2.5 rounded-full bg-signal" />}
@@ -247,13 +271,18 @@ export default function SearchPage() {
       </section>
 
       <section className="space-y-3">
-        <ol className="space-y-2 text-sm text-muted">
-          <li className="flex gap-3"><Step n={1} /> Legge le offerte da {taskCount ?? "tutte le"} fonti, con i tuoi ruoli come parole di ricerca.</li>
-          <li className="flex gap-3"><Step n={2} /> Scarta duplicati, annunci vecchi, sospetti, non idonei per paese o lingua.</li>
-          <li className="flex gap-3"><Step n={3} /> Dà il punteggio come hai scelto sopra. Le offerte arrivate ora le trovi in Offerte, sotto &ldquo;Da vedere&rdquo;.</li>
+        <StationLine
+          stops={["Fonti", "Filtri", "Punteggio", "Offerte"]}
+          at={running ? (progress?.label === "Valutazione AI" ? 2 : progress && progress.done === progress.total ? 1 : 0) : summary ? 3 : -1}
+          color="var(--color-signal)"
+        />
+        <ol className="space-y-1.5 text-sm text-muted">
+          <li>Legge le offerte da {taskCount ?? "tutte le"} fonti, cercando con le parole del tuo CV.</li>
+          <li>Scarta duplicati, annunci vecchi, sospetti, non idonei per paese o lingua.</li>
+          <li>Dà il punteggio come hai scelto sopra; le nuove offerte le trovi in Offerte, sotto &ldquo;Da vedere&rdquo;.</li>
         </ol>
         <button className="btn-primary min-h-13 w-full text-base" disabled={running} onClick={search}>
-          <Icon name="search" className="size-5" strokeWidth={2.2} />
+          {running ? <RadarMark className="size-6" scanning /> : <Icon name="search" className="size-5" strokeWidth={2.2} />}
           {running ? "Ricerca in corso…" : "Avvia la ricerca"}
         </button>
         {progress && <Progress {...progress} />}
@@ -265,7 +294,7 @@ export default function SearchPage() {
         <section className="card space-y-3 border-signal/30">
           <h2 className="text-lg font-semibold">Risultato</h2>
           <p className="text-sm">
-            <span className="font-display text-3xl font-bold text-signal tabular-nums">{summary.inserted}</span>{" "}
+            <span className="text-3xl font-extrabold text-signal tabular-nums">{summary.inserted}</span>{" "}
             <span className="text-ink">nuove offerte</span>
             <span className="block text-muted">su {summary.fetched} annunci letti, {totalRejected} scartati</span>
           </p>
@@ -320,14 +349,6 @@ export default function SearchPage() {
       <Companies />
       <ManualJob />
     </div>
-  );
-}
-
-function Step({ n }: { n: number }) {
-  return (
-    <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-line font-display text-xs font-semibold text-ink" aria-hidden="true">
-      {n}
-    </span>
   );
 }
 

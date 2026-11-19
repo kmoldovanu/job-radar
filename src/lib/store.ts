@@ -1,6 +1,8 @@
 import "server-only";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { getDb, schema } from "./db";
+import { ensureCvColumns } from "./db/ensure";
+import { quickMatch } from "./filters/match";
 import type { KeptJob } from "./filters/pipeline";
 import { dedupeKey } from "./sources/util";
 import {
@@ -9,19 +11,92 @@ import {
 
 const { jobs, profile, settings, applications, tailored, companies } = schema;
 
-export async function getProfile(): Promise<{ profile: Profile; rawText: string; exists: boolean }> {
-  const rows = await (await getDb()).select().from(profile).where(eq(profile.id, 1));
-  if (!rows[0]) return { profile: emptyProfile(), rawText: "", exists: false };
-  const parsed = profileSchema.safeParse(rows[0].data);
-  return { profile: parsed.success ? parsed.data : emptyProfile(), rawText: rows[0].rawText, exists: true };
+/** Database con le colonne del file del CV pronte (vedi db/ensure.ts). */
+async function profileDb() {
+  const db = await getDb();
+  await ensureCvColumns(db);
+  return db;
 }
 
-export async function saveProfile(data: Profile, rawText?: string) {
-  const values = { id: 1, data, updatedAt: new Date(), ...(rawText !== undefined ? { rawText } : {}) };
-  await (await getDb())
+export interface CvFileInfo {
+  name: string;
+  type: string;
+  size: number;
+  uploadedAt: Date;
+}
+
+export async function getProfile(): Promise<{ profile: Profile; rawText: string; exists: boolean; cvFile: CvFileInfo | null }> {
+  const rows = await (await profileDb())
+    .select({
+      data: profile.data, rawText: profile.rawText, cvFileName: profile.cvFileName, cvFileType: profile.cvFileType,
+      cvFileSize: profile.cvFileSize, cvUploadedAt: profile.cvUploadedAt,
+    })
+    .from(profile)
+    .where(eq(profile.id, 1));
+  const row = rows[0];
+  if (!row) return { profile: emptyProfile(), rawText: "", exists: false, cvFile: null };
+  const parsed = profileSchema.safeParse(row.data);
+  const cvFile =
+    row.cvFileName && row.cvUploadedAt
+      ? { name: row.cvFileName, type: row.cvFileType ?? "", size: row.cvFileSize ?? 0, uploadedAt: row.cvUploadedAt }
+      : null;
+  return { profile: parsed.success ? parsed.data : emptyProfile(), rawText: row.rawText, exists: true, cvFile };
+}
+
+export async function saveProfile(data: Profile, rawText?: string, file?: { name: string; type: string; bytes: Uint8Array }) {
+  const values = {
+    id: 1,
+    data,
+    updatedAt: new Date(),
+    ...(rawText !== undefined ? { rawText } : {}),
+    ...(file
+      ? {
+          cvFileName: file.name.slice(0, 200),
+          cvFileType: file.type.slice(0, 120),
+          cvFileSize: file.bytes.byteLength,
+          cvFileData: Buffer.from(file.bytes).toString("base64"),
+          cvUploadedAt: new Date(),
+        }
+      : {}),
+  };
+  await (await profileDb())
     .insert(profile)
     .values({ rawText: "", ...values })
     .onConflictDoUpdate({ target: profile.id, set: values });
+}
+
+/** Il file del CV caricato, per scaricarlo di nuovo. */
+export async function getCvFile(): Promise<{ name: string; type: string; bytes: Buffer } | null> {
+  const rows = await (await profileDb())
+    .select({ name: profile.cvFileName, type: profile.cvFileType, data: profile.cvFileData })
+    .from(profile)
+    .where(eq(profile.id, 1));
+  const r = rows[0];
+  if (!r?.name || !r.data) return null;
+  return { name: r.name, type: r.type || "application/octet-stream", bytes: Buffer.from(r.data, "base64") };
+}
+
+/**
+ * Ricalcola il punteggio rapido delle offerte ancora aperte con il profilo attuale:
+ * dopo un nuovo CV le offerte già trovate si riordinano subito, senza rifare la ricerca.
+ */
+export async function rescoreOpenJobs(p: Profile): Promise<number> {
+  const db = await getDb();
+  const rows = await db
+    .select({ id: jobs.id, title: jobs.title, description: jobs.description, tags: jobs.tags })
+    .from(jobs)
+    .where(eq(jobs.status, "new"));
+  if (!rows.length) return 0;
+  for (let i = 0; i < rows.length; i += 200) {
+    const chunk = rows.slice(i, i + 200).map((r) => {
+      const m = quickMatch({ title: r.title, description: r.description, tags: r.tags ?? [] }, p);
+      return sql`(${r.id}, ${m.score}, ${JSON.stringify(m)})`;
+    });
+    await db.execute(
+      sql`UPDATE "jobs" SET "quick_score" = v.score::int, "match" = v.match::jsonb FROM (VALUES ${sql.join(chunk, sql`, `)}) AS v(id, score, match) WHERE "jobs"."id" = v.id`,
+    );
+  }
+  return rows.length;
 }
 
 export async function getSettings(): Promise<Settings> {

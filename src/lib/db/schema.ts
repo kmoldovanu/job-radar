@@ -7,6 +7,12 @@ export const profile = pgTable("profile", {
   data: jsonb("data").$type<Profile>().notNull(),
   rawText: text("raw_text").notNull().default(""),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  /** il file del CV caricato, così com'era (PDF o DOCX, in base64) */
+  cvFileName: text("cv_file_name"),
+  cvFileType: text("cv_file_type"),
+  cvFileSize: integer("cv_file_size"),
+  cvFileData: text("cv_file_data"),
+  cvUploadedAt: timestamp("cv_uploaded_at", { withTimezone: true }),
 });
 
 /** Riga unica (id=1): impostazioni. */

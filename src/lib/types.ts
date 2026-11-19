@@ -106,6 +106,34 @@ export const preferencesSchema = z.object({
   seniority: z.enum(["junior", "mid", "senior", "lead"]).default("mid"),
 });
 
+/**
+ * Indice del CV: quello che la ricerca e il punteggio rapido usano per capire chi sei.
+ * Si costruisce dal CV caricato (con l'AI quando c'è la chiave, altrimenti dal testo), non dalle
+ * preferenze: i ruoli che scrivi a mano si aggiungono, non lo sostituiscono.
+ */
+export const cvSkillSchema = z.object({
+  name: z.string(),
+  /** sinonimi, sigle e traduzioni (es. "Gestione progetti" → "project management") */
+  aliases: z.array(z.string()).default([]),
+  /** 3 = competenza centrale nel CV, 2 = usata spesso, 1 = citata */
+  weight: z.number().min(1).max(3).default(2),
+});
+
+export const cvIndexSchema = z.object({
+  /** titoli di lavoro adatti al CV, dal più adatto, in inglese e nella lingua del CV */
+  titles: z.array(z.string()).default([]),
+  skills: z.array(cvSkillSchema).default([]),
+  /** settori e domìni (fintech, logistica, SaaS B2B…) */
+  domains: z.array(z.string()).default([]),
+  /** altre parole chiave distintive del CV (strumenti, metodi, certificazioni) */
+  keywords: z.array(z.string()).default([]),
+  /** "ai" = letto dall'AI, "text" = ricavato dal testo senza AI */
+  source: z.enum(["ai", "text"]).default("text"),
+  builtAt: z.string().default(""),
+});
+export type CvIndex = z.infer<typeof cvIndexSchema>;
+export type CvSkill = z.infer<typeof cvSkillSchema>;
+
 export const profileSchema = z.object({
   name: z.string().default(""),
   headline: z.string().default(""),
@@ -121,6 +149,8 @@ export const profileSchema = z.object({
   languages: z.array(spokenLanguageSchema).default([]),
   projects: z.array(projectSchema).default([]),
   preferences: preferencesSchema.default(preferencesSchema.parse({})),
+  /** indice costruito dal CV caricato: base della ricerca e del punteggio rapido */
+  cvIndex: cvIndexSchema.optional(),
 });
 
 export type Profile = z.infer<typeof profileSchema>;
@@ -210,7 +240,11 @@ export const REJECT_LABELS: Record<RejectReason, string> = {
 export interface MatchDetails {
   score: number;
   titleScore: number;
+  /** titolo del CV più vicino a quello dell'offerta */
+  titleMatch?: string | null;
   skillsFound: string[];
+  /** settori e parole chiave del CV trovati nell'annuncio */
+  keywordsFound?: string[];
   jobSeniority: string | null;
   yearsRequired: number | null;
   notes: string[];

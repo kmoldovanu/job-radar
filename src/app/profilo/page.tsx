@@ -1,9 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Icon } from "@/components/Icon";
 import { ErrorBox, PageHeader } from "@/components/ui";
 import { api } from "@/lib/client";
-import { emptyProfile, LANGUAGE_LEVELS, type Profile } from "@/lib/types";
+import { emptyProfile, LANGUAGE_LEVELS, type CvIndex, type Profile } from "@/lib/types";
+
+interface CvFile {
+  name: string;
+  type: string;
+  size: number;
+  uploadedAt: string;
+}
 
 const csv = (a: string[]) => a.join(", ");
 const fromCsv = (s: string) =>
@@ -20,15 +28,17 @@ const lines = (s: string) =>
 export default function ProfilePage() {
   const [p, setP] = useState<Profile | null>(null);
   const [exists, setExists] = useState(false);
+  const [cvFile, setCvFile] = useState<CvFile | null>(null);
   const [busy, setBusy] = useState("");
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
 
   useEffect(() => {
-    api<{ profile: Profile; exists: boolean }>("/api/profile")
+    api<{ profile: Profile; exists: boolean; cvFile: CvFile | null }>("/api/profile")
       .then((r) => {
         setP(r.profile);
         setExists(r.exists);
+        setCvFile(r.cvFile);
       })
       .catch((e) => {
         setErr(e.message);
@@ -48,10 +58,12 @@ export default function ProfilePage() {
       if (!res.ok) throw new Error(data.error ?? "Errore");
       setP(data.profile);
       setExists(true);
+      setCvFile(data.cvFile);
+      const rescored = data.rescored ? ` Ho ricalcolato il punteggio di ${data.rescored} offerte già trovate.` : "";
       setMsg(
         data.ai
-          ? "CV letto! Controlla i dati qui sotto, correggi se serve e salva."
-          : "Testo del CV salvato. Senza chiave Anthropic devi compilare il profilo a mano.",
+          ? `CV salvato e letto: ricerca e punteggi ora partono da qui.${rescored} Controlla i dati qui sotto e correggi se serve.`
+          : `CV salvato. Senza chiave Anthropic l'indice di ricerca viene dalle parole del CV; il profilo va compilato a mano.${rescored}`,
       );
     } catch (e) {
       setErr((e as Error).message);
@@ -66,9 +78,9 @@ export default function ProfilePage() {
     setErr("");
     setMsg("");
     try {
-      await api("/api/profile", { method: "PUT", json: p });
+      const r = await api<{ rescored: number }>("/api/profile", { method: "PUT", json: p });
       setExists(true);
-      setMsg("Profilo salvato ✓");
+      setMsg(r.rescored ? `Profilo salvato. Punteggio ricalcolato su ${r.rescored} offerte.` : "Profilo salvato.");
     } catch (e) {
       setErr((e as Error).message);
     } finally {
@@ -84,28 +96,60 @@ export default function ProfilePage() {
     <div className="space-y-4">
       <PageHeader title="Profilo" subtitle="Il tuo CV master e cosa cerchi" />
 
-      <div className="card space-y-2">
-        <h2 className="text-lg font-semibold">{exists ? "Ricarica il CV" : "1. Carica il tuo CV"}</h2>
-        <p className="text-sm text-muted">PDF o Word (.docx). L&apos;AI lo trasforma nel tuo CV master, che puoi modificare.</p>
-        <label className="btn-primary cursor-pointer">
-          {busy === "upload" ? "Lettura in corso…" : "Scegli il file del CV"}
-          <input
-            type="file"
-            accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            className="hidden"
-            disabled={!!busy}
-            onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])}
-          />
-        </label>
-        {exists && <p className="text-sm text-signal">Ricaricando il CV i dati qui sotto verranno sostituiti (le preferenze di ricerca restano).</p>}
-      </div>
+      <section className="card space-y-4" aria-labelledby="cv">
+        <div className="flex items-start gap-3.5">
+          <div className="grid size-[52px] shrink-0 place-items-center rounded-[12px] bg-signal text-night">
+            <Icon name="file" className="size-6" strokeWidth={2} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h2 id="cv" className="text-lg font-bold">Il tuo CV</h2>
+            {cvFile ? (
+              <>
+                <p className="break-all text-[15px] font-semibold text-ink">{cvFile.name}</p>
+                <p className="text-sm text-muted">
+                  {fmtSize(cvFile.size)} ∙ caricato il{" "}
+                  {new Date(cvFile.uploadedAt).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" })}
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-muted">PDF o Word (.docx). Lo salvo così com&apos;è: ricerca e punteggi partono da qui.</p>
+            )}
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <label className={`${cvFile ? "btn-secondary" : "btn-primary"} cursor-pointer has-[:disabled]:opacity-40`}>
+            <Icon name="upload" className="size-4" strokeWidth={2.2} />
+            {busy === "upload" ? "Lettura del CV…" : cvFile ? "Carica un nuovo CV" : "Carica il tuo CV"}
+            <input
+              type="file"
+              accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              className="sr-only"
+              disabled={!!busy}
+              onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])}
+            />
+          </label>
+          {cvFile && (
+            <a className="btn-secondary" href="/api/profile/cv" target="_blank" rel="noopener noreferrer">
+              <Icon name="external" className="size-4" />
+              Apri il CV
+            </a>
+          )}
+        </div>
+        {exists && <p className="text-[13px] text-muted">Con un nuovo CV i dati qui sotto vengono sostituiti; le preferenze di ricerca restano.</p>}
+      </section>
 
-      {msg && <p className="rounded-xl border border-good/40 bg-good/10 p-3 text-sm text-good">{msg}</p>}
+      {msg && (
+        <p role="status" className="rounded-[10px] bg-good/12 p-3 text-sm font-medium text-[#7fe0ad]">
+          {msg}
+        </p>
+      )}
       <ErrorBox error={err} />
 
+      {p.cvIndex && <CvIndexCard index={p.cvIndex} />}
+
       <section className="card space-y-3">
-        <h2 className="text-lg font-semibold">Cosa cerchi</h2>
-        <Field label="Ruoli che cerchi (separati da virgola, in inglese funzionano meglio)">
+        <h2 className="text-lg font-bold">Cosa cerchi</h2>
+        <Field label={p.cvIndex ? "Altri ruoli che cerchi (si aggiungono ai titoli presi dal CV)" : "Ruoli che cerchi (separati da virgola, in inglese funzionano meglio)"}>
           <TextList value={p.preferences.targetRoles} onChange={(v) => pref({ targetRoles: v })} placeholder="Data Analyst, Business Analyst" />
         </Field>
         <Field label="Parole da escludere">
@@ -135,7 +179,7 @@ export default function ProfilePage() {
             ).map(([k, l]) => (
               <label key={k} className="flex items-center gap-1.5">
                 <input
-                  type="checkbox" className="size-5 accent-[#f4b740]"
+                  type="checkbox" className="size-5 accent-signal"
                   checked={p.preferences.workModes.includes(k)}
                   onChange={(e) =>
                     pref({ workModes: e.target.checked ? [...p.preferences.workModes, k] : p.preferences.workModes.filter((x) => x !== k) })
@@ -147,13 +191,13 @@ export default function ProfilePage() {
           </div>
         </Field>
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" className="size-5 accent-[#f4b740]" checked={p.preferences.willingToRelocate} onChange={(e) => pref({ willingToRelocate: e.target.checked })} />
+          <input type="checkbox" className="size-5 accent-signal" checked={p.preferences.willingToRelocate} onChange={(e) => pref({ willingToRelocate: e.target.checked })} />
           Sono disponibile a trasferirmi all&apos;estero
         </label>
       </section>
 
       <section className="card space-y-3">
-        <h2 className="text-lg font-semibold">Dati personali</h2>
+        <h2 className="text-lg font-bold">Dati personali</h2>
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Nome">
             <input className="input" value={p.name} onChange={(e) => up({ name: e.target.value })} />
@@ -180,7 +224,7 @@ export default function ProfilePage() {
       </section>
 
       <section className="card space-y-3">
-        <h2 className="text-lg font-semibold">Lingue</h2>
+        <h2 className="text-lg font-bold">Lingue</h2>
         <p className="text-sm text-muted">Servono a scartare le offerte che richiedono lingue che non parli almeno a livello B2.</p>
         {p.languages.map((l, i) => (
           <div key={i} className="flex gap-2">
@@ -221,7 +265,7 @@ export default function ProfilePage() {
       </section>
 
       <section className="card space-y-3">
-        <h2 className="text-lg font-semibold">Competenze e certificazioni</h2>
+        <h2 className="text-lg font-bold">Competenze e certificazioni</h2>
         <Field label="Competenze (separate da virgola)">
           <TextList value={p.skills} onChange={(v) => up({ skills: v })} area />
         </Field>
@@ -231,11 +275,11 @@ export default function ProfilePage() {
       </section>
 
       <section className="card space-y-3">
-        <h2 className="text-lg font-semibold">Esperienze</h2>
+        <h2 className="text-lg font-bold">Esperienze</h2>
         {p.experience.map((x, i) => {
           const set = (patch: Partial<typeof x>) => up({ experience: p.experience.map((e, j) => (j === i ? { ...e, ...patch } : e)) });
           return (
-            <div key={i} className="space-y-2 rounded-xl border border-slate-200 p-3 dark:border-slate-800">
+            <div key={i} className="space-y-2 rounded-[12px] bg-rail p-3">
               <div className="grid gap-2 sm:grid-cols-2">
                 <input className="input" placeholder="Azienda" value={x.company} onChange={(e) => set({ company: e.target.value })} />
                 <input className="input" placeholder="Ruolo" value={x.role} onChange={(e) => set({ role: e.target.value })} />
@@ -256,11 +300,11 @@ export default function ProfilePage() {
       </section>
 
       <section className="card space-y-3">
-        <h2 className="text-lg font-semibold">Formazione</h2>
+        <h2 className="text-lg font-bold">Formazione</h2>
         {p.education.map((x, i) => {
           const set = (patch: Partial<typeof x>) => up({ education: p.education.map((e, j) => (j === i ? { ...e, ...patch } : e)) });
           return (
-            <div key={i} className="space-y-2 rounded-xl border border-slate-200 p-3 dark:border-slate-800">
+            <div key={i} className="space-y-2 rounded-[12px] bg-rail p-3">
               <div className="grid gap-2 sm:grid-cols-2">
                 <input className="input" placeholder="Istituto" value={x.institution} onChange={(e) => set({ institution: e.target.value })} />
                 <input className="input" placeholder="Titolo" value={x.degree} onChange={(e) => set({ degree: e.target.value })} />
@@ -280,11 +324,11 @@ export default function ProfilePage() {
       </section>
 
       <section className="card space-y-3">
-        <h2 className="text-lg font-semibold">Progetti</h2>
+        <h2 className="text-lg font-bold">Progetti</h2>
         {p.projects.map((x, i) => {
           const set = (patch: Partial<typeof x>) => up({ projects: p.projects.map((e, j) => (j === i ? { ...e, ...patch } : e)) });
           return (
-            <div key={i} className="space-y-2 rounded-xl border border-slate-200 p-3 dark:border-slate-800">
+            <div key={i} className="space-y-2 rounded-[12px] bg-rail p-3">
               <input className="input" placeholder="Nome progetto" value={x.name} onChange={(e) => set({ name: e.target.value })} />
               <input className="input" placeholder="Descrizione" value={x.description} onChange={(e) => set({ description: e.target.value })} />
               <Lines value={x.bullets} onChange={(v) => set({ bullets: v })} placeholder="Punti elenco, uno per riga" />
@@ -305,6 +349,61 @@ export default function ProfilePage() {
         </button>
       </div>
     </div>
+  );
+}
+
+function fmtSize(bytes: number) {
+  return bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1).replace(".", ",")} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
+/** Cosa la ricerca e il punteggio hanno capito dal CV: titoli, competenze con sinonimi, settori. */
+function CvIndexCard({ index }: { index: CvIndex }) {
+  const skills = [...index.skills].sort((a, b) => b.weight - a.weight);
+  return (
+    <section className="card space-y-4" aria-labelledby="capito">
+      <div>
+        <h2 id="capito" className="text-lg font-bold">Cosa ho capito dal tuo CV</h2>
+        <p className="mt-0.5 text-sm text-muted">
+          {index.source === "ai"
+            ? "Letto dall'AI. La ricerca usa questi titoli come parole chiave e il punteggio cerca queste competenze negli annunci, anche tradotte."
+            : "Ricavato dalle parole che il CV ripete (senza AI). Con la chiave Anthropic l'indice diventa molto più preciso."}
+        </p>
+      </div>
+      {index.titles.length > 0 && (
+        <div>
+          <h3 className="label">Titoli per cui cerco</h3>
+          <div className="flex flex-wrap gap-1.5">
+            {index.titles.map((t) => (
+              <span key={t} className="rounded-md bg-sky/15 px-2 py-1 text-[13px] font-semibold text-[#8dbcff]">{t}</span>
+            ))}
+          </div>
+        </div>
+      )}
+      {skills.length > 0 && (
+        <div>
+          <h3 className="label">Competenze che cerco negli annunci</h3>
+          <ul className="flex flex-wrap gap-1.5">
+            {skills.map((s) => (
+              <li
+                key={s.name}
+                title={s.aliases.length ? `Anche: ${s.aliases.join(", ")}` : undefined}
+                className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[13px] ${s.weight === 3 ? "bg-good/15 font-bold text-[#7fe0ad]" : "bg-panel-2 font-medium text-slate-200"}`}
+              >
+                {s.name}
+                {s.aliases.length > 0 && <span className="text-[11px] font-semibold text-faint">+{s.aliases.length}</span>}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1.5 text-xs text-faint">In verde quelle centrali nel tuo lavoro; +N sono i sinonimi e le traduzioni che riconosco.</p>
+        </div>
+      )}
+      {(index.domains.length > 0 || index.keywords.length > 0) && (
+        <div>
+          <h3 className="label">Settori e parole chiave</h3>
+          <p className="text-sm leading-relaxed text-slate-300">{[...index.domains, ...index.keywords].join(" ∙ ")}</p>
+        </div>
+      )}
+    </section>
   );
 }
 
