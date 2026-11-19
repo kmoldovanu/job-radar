@@ -1,6 +1,7 @@
 import "server-only";
 import { eq } from "drizzle-orm";
 import { getDb } from "./db";
+import { searchQueries } from "./cv/signals";
 import { runFilters, type Rejection } from "./filters/pipeline";
 import * as adzuna from "./sources/adzuna";
 import * as arbeitnow from "./sources/arbeitnow";
@@ -35,7 +36,8 @@ export interface SearchResult {
 }
 
 async function fetchFor(task: SearchTask, profile: Profile, settings: Settings): Promise<Job[]> {
-  const queries = profile.preferences.targetRoles.map((r) => r.trim()).filter(Boolean);
+  // query dal CV (titoli adatti, ultimo ruolo) alternate ai ruoli scritti a mano
+  const queries = searchQueries(profile);
   switch (task.source) {
     case "himalayas":
       return himalayas.fetchJobs(queries);

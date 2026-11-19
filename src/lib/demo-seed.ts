@@ -1,5 +1,7 @@
 import "server-only";
 import { getDemoDb, schema } from "./db";
+import { ensureCvColumns } from "./db/ensure";
+import { quickMatch } from "./filters/match";
 import { dedupeKey } from "./sources/util";
 import { defaultSettings, type AiEvaluation, type MatchDetails, type Profile, type TailoredCv } from "./types";
 
@@ -64,6 +66,26 @@ const demoProfile: Profile = {
     willingToRelocate: true,
     yearsExperience: 3,
     seniority: "mid",
+  },
+  cvIndex: {
+    titles: ["Full-stack Developer", "Backend Developer", "Python Developer", "Django Developer", "Web Developer", "Sviluppatrice web"],
+    skills: [
+      { name: "Python", aliases: [], weight: 3 },
+      { name: "Django", aliases: ["Django REST Framework", "DRF"], weight: 3 },
+      { name: "React", aliases: ["React.js", "ReactJS"], weight: 3 },
+      { name: "TypeScript", aliases: ["TS"], weight: 2 },
+      { name: "JavaScript", aliases: ["JS"], weight: 2 },
+      { name: "PostgreSQL", aliases: ["Postgres", "SQL"], weight: 2 },
+      { name: "API REST", aliases: ["REST API", "RESTful"], weight: 2 },
+      { name: "Linux", aliases: ["Debian"], weight: 2 },
+      { name: "Nginx", aliases: [], weight: 1 },
+      { name: "htmx", aliases: [], weight: 1 },
+      { name: "Git", aliases: [], weight: 1 },
+    ],
+    domains: ["business software", "internal tools"],
+    keywords: ["full-stack", "web applications", "deployment"],
+    source: "ai",
+    builtAt: "2026-11-01T08:00:00.000Z",
   },
 };
 
@@ -171,14 +193,8 @@ const demoJobs: DemoJob[] = [
 ];
 
 function matchFor(j: DemoJob): MatchDetails {
-  return {
-    score: j.quick,
-    titleScore: Math.min(100, j.quick + 8),
-    skillsFound: j.tags.filter((t) => demoProfile.skills.includes(t)),
-    jobSeniority: null,
-    yearsRequired: null,
-    notes: [],
-  };
+  // stessi dettagli del punteggio vero (titolo vicino, competenze del CV trovate), con il punteggio di esempio
+  return { ...quickMatch({ title: j.title, description: j.description, tags: j.tags }, demoProfile), score: j.quick };
 }
 
 function tailoredCv(j: DemoJob): TailoredCv {
@@ -213,6 +229,7 @@ function letterFor(j: DemoJob): string {
 /** Svuota il database demo e lo riempie con i dati di esempio. Con onlyIfEmpty non fa nulla se c'è già un profilo. */
 export async function seedDemo({ onlyIfEmpty = false } = {}): Promise<{ seeded: boolean }> {
   const db = getDemoDb();
+  await ensureCvColumns(db);
   if (onlyIfEmpty) {
     const existing = await db.select({ id: profile.id }).from(profile).limit(1);
     if (existing.length) return { seeded: false };

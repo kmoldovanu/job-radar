@@ -19,7 +19,7 @@ Web app personale per cercare lavoro in tutto il mondo (remoto, Europa e oltre),
 
 ## Cosa fa
 
-1. **Profilo**: carichi il tuo CV (PDF o Word) → l'AI lo trasforma in un *CV master* strutturato che puoi correggere. Qui indichi anche ruoli cercati, parole da escludere, modalità (remoto/ibrido/in sede), disponibilità a trasferirti, lingue con livello.
+1. **Profilo**: carichi il tuo CV (PDF o Word). Il file viene **salvato così com'è** (lo riapri con *Apri il CV*) e l'AI ne ricava un *CV master* strutturato che puoi correggere e un **indice di ricerca**: titoli di lavoro adatti (in inglese e in italiano), competenze con sinonimi e traduzioni, settori, parole chiave. La scheda *Cosa ho capito dal tuo CV* mostra l'indice. **Ricerca e punteggi partono dal CV**: i ruoli che scrivi a mano si aggiungono, non lo sostituiscono. Qui indichi anche parole da escludere, modalità (remoto/ibrido/in sede), disponibilità a trasferirti, lingue con livello. Dopo un nuovo CV (o un salvataggio del profilo) il punteggio delle offerte già trovate viene ricalcolato subito.
 2. **Cerca**: mostra cosa stai cercando (ruoli, modalità, livello, fonti) e ti fa scegliere chi dà il punteggio: *solo punteggio rapido*, *AI sulle migliori N* (predefinito) o *AI su tutte le nuove* (max 100). Poi interroga in parallelo tutte le fonti attive, una richiesta per fonte (o per paese/azienda), elimina i duplicati, scarta le offerte senza chance concrete e assegna il punteggio come scelto. Alla fine vedi quante offerte sono state scartate e perché.
 3. **Offerte**: schede *Da vedere* (mai aperte, con il badge "Nuova"), *Viste*, *Tutte* e *Scartate* (con *Ripristina*); ordinamento per punteggio o per data di arrivo. Un'offerta diventa "Vista" quando apri i dettagli o l'annuncio, oppure con il pulsante a forma di occhio (che la riporta anche tra le "Da vedere"); *Segna tutte come viste* svuota la lista. *Prepara N candidature* genera in blocco CV + lettera su misura per le migliori N. Su ogni offerta: *Apri annuncio*, download CV/lettera in PDF e Word, *Candidato* (va nel tracker con la data), *Non mi interessa* (va tra le Scartate, con Annulla subito e Ripristina dopo).
 4. **Candidature**: stato (inviata, colloquio, offerta, rifiutato), note, CV usato, promemoria di follow-up dopo 10 giorni, export CSV.
@@ -46,12 +46,13 @@ Ogni offerta mostra sempre "via *fonte*" con il link. Il pulsante **🔍 Sito de
 - **Anti-truffa**: niente annunci senza nome azienda, con Telegram/WhatsApp, richieste di pagamento, "commission only", MLM.
 - **Idoneità geografica**: da cittadino UE puoi lavorare in UE + Islanda, Liechtenstein, Norvegia, Svizzera. Per il remoto vengono tenute le offerte worldwide/Europa/EMEA/Italia e scartate quelle "solo USA", "must be located in the US", "authorized to work in the US", "security clearance", ecc. Per il lavoro in sede fuori da quest'area l'offerta resta solo se parla di sponsor del visto (e non dice "no sponsorship").
 - **Lingua**: scarta gli annunci scritti in una lingua che non parli, o che richiedono una lingua che non parli almeno a livello B2 (i "nice to have" sono ignorati).
-- **Match rapido 0-100** (senza AI): titolo vs ruoli cercati, competenze trovate, seniority, anni di esperienza richiesti, parole escluse.
+- **Stima rapida dal CV 0-100** (senza AI, `src/lib/filters/match.ts` + `src/lib/cv/signals.ts`): titolo dell'offerta contro i titoli del CV con sinonimi e traduzioni (*sviluppatore* = *developer* = *engineer*; seniority e località nel titolo non contano), competenze del CV trovate nell'annuncio anche tramite i loro sinonimi (quelle centrali pesano di più), settori e parole chiave del CV, seniority ("Project Manager" non è più trattato come ruolo da lead), anni di esperienza richiesti, parole escluse. Ogni offerta mostra *Dal tuo CV:* il titolo più vicino e le competenze trovate.
+- **Parole di ricerca**: le fonti vengono interrogate con i titoli del CV alternati ai ruoli scritti a mano (max 6).
 
 ### AI (Claude)
 
 - **Offerte con punteggio AI sotto 20** (soglia in Impostazioni, 0 = mai) vanno subito tra le *Scartate*: le ricerche non le ripropongono più, ma puoi ripristinarle.
-- **Valutazione** con il modello veloce (default `claude-haiku-5-5`): recruiter severo, una chiamata per offerta, JSON validato con zod (punteggio, chance, sintesi, punti di forza, cosa manca, ostacoli, lingua della candidatura, parole chiave).
+- **Valutazione** con il modello veloce (default `claude-haiku-5-5`) sul **testo originale del CV** caricato (non solo sul profilo), messo in cache del prompt perché è uguale per tutte le offerte: recruiter severo, riconosce titoli e competenze tradotti, una chiamata per offerta, JSON validato con zod (punteggio, chance, sintesi, punti di forza, cosa manca, ostacoli, lingua della candidatura, parole chiave).
 - **CV + lettera su misura** con il modello di scrittura (default `claude-sonnet-5-5`) nella lingua dell'annuncio. L'AI può solo selezionare, riordinare, riformulare e tradurre dal CV master. Dopo la generazione un **controllo in codice** toglie aziende e formazione assenti dal master, forza le date del master, toglie competenze/certificazioni/lingue che non hai e i punti elenco con numeri o metriche che non compaiono nel master. Le correzioni fatte vengono mostrate.
 - Con `claude-sonnet-5-5` (e Opus/Fable) è attivo il *fallback lato server* di Anthropic: se il modello rifiuta una richiesta per un falso positivo dei filtri di sicurezza, la stessa richiesta viene ripetuta automaticamente su un altro modello.
 - **Senza chiave Anthropic l'app funziona lo stesso**: ricerca, filtri, punteggio rapido e tracker. Il profilo va compilato a mano.
@@ -95,7 +96,7 @@ Poi, dal tuo computer, con `DATABASE_URL` nel file `.env`:
 npm run db:migrate
 ```
 
-Va rifatto solo quando aggiorni l'app e c'è una nuova migrazione nella cartella `drizzle/`.
+Va rifatto solo quando aggiorni l'app e c'è una nuova migrazione nella cartella `drizzle/`. (Le colonne del file del CV, migrazione `0003_cv_file`, l'app le crea anche da sola se te ne dimentichi.)
 
 ## Dove prendere le chiavi
 
@@ -150,6 +151,7 @@ Per attivarla:
 - **Mai sovrascrivere**: una nuova ricerca non ripropone né modifica offerte a cui ti sei candidato o che hai scartato. Lo stesso annuncio trovato su più fonti viene salvato una volta sola (chiave azienda + titolo).
 - Ogni fonte è un modulo in `src/lib/sources/` con una funzione `parse()` pura e testata; tutto viene normalizzato nel tipo `Job` (`src/lib/types.ts`).
 - I filtri sono in `src/lib/filters/`, il controllo anti-invenzioni in `src/lib/ai/guard.ts`.
+- **Stile**: "Linea della metro", descritto in `DESIGN.md` (prodotto in `PRODUCT.md`). Tema scuro inchiostro, carattere Overpass, colori di linea per gli stati, punteggio come badge di una linea (pieno = AI, contorno = stima dal CV), candidature come linea con le fermate.
 
 ## Struttura
 

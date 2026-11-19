@@ -17,6 +17,9 @@ const PATHS = {
   globe: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18",
   refresh: "M20 11a8 8 0 0 0-14.9-3M4 4v4h4M4 13a8 8 0 0 0 14.9 3M20 20v-4h-4",
   copy: "M9 9h10v11H9zM5 15V4h10",
+  file: "M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5zM14 3v5h5M9 13h6M9 17h4",
+  upload: "M12 16V4M7 9l5-5 5 5M5 20h14",
+  pin: "M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21zM12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z",
 } as const;
 
 export type IconName = keyof typeof PATHS;
@@ -29,15 +32,17 @@ export function Icon({ name, className = "size-5", strokeWidth = 1.8 }: { name: 
   );
 }
 
-/** Marchio: cerchi del radar con il punto che lampeggia. */
-export function RadarMark({ className = "size-7" }: { className?: string }) {
+/** Marchio: cerchi del radar, la lancetta e il punto ambra. Con `scanning` la lancetta gira (ricerca in corso). */
+export function RadarMark({ className = "size-7", scanning = false }: { className?: string; scanning?: boolean }) {
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden="true">
-      <circle cx="16" cy="16" r="13" fill="none" stroke="#24374c" strokeWidth="2" />
-      <circle cx="16" cy="16" r="7.5" fill="none" stroke="#3a5470" strokeWidth="2" />
-      <path d="M16 16 L25.2 6.8" stroke="#8c9fb2" strokeWidth="2" strokeLinecap="round" />
-      <circle cx="16" cy="16" r="2.2" fill="#e7eef4" />
-      <circle cx="21.5" cy="20" r="2.6" fill="#f4b740" />
+      <circle cx="16" cy="16" r="13" fill="#131d30" stroke="#3a4a66" strokeWidth="2" />
+      <circle cx="16" cy="16" r="7.5" fill="none" stroke="#3a4a66" strokeWidth="1.6" />
+      <g className={scanning ? "origin-center animate-sweep" : undefined} style={{ transformBox: "view-box" }}>
+        <path d="M16 16 L25.2 6.8" stroke="#9aa8bf" strokeWidth="2" strokeLinecap="round" />
+      </g>
+      <circle cx="16" cy="16" r="2.2" fill="#edf1f7" />
+      <circle cx="21.5" cy="20" r="2.8" fill="#f6b52e" />
     </svg>
   );
 }

@@ -16,9 +16,10 @@ export async function POST(_req: Request, ctx: { params: Promise<{ id: string }>
   try {
     if (!hasAi()) return fail("ANTHROPIC_API_KEY non impostata", 503);
     const id = decodeURIComponent((await ctx.params).id);
-    const [job, { profile }, settings] = await Promise.all([getJob(id), getProfile(), getSettings()]);
+    const [job, { profile, rawText }, settings] = await Promise.all([getJob(id), getProfile(), getSettings()]);
     if (!job) return fail("Offerta non trovata", 404);
-    const ev = await evaluateJob(job, profile, settings.evalModel);
+    // valutazione sul CV originale caricato, non solo sul profilo
+    const ev = await evaluateJob(job, profile, settings.evalModel, rawText);
     await saveEvaluation(id, ev);
     let hidden = false;
     if (settings.autoHideBelow > 0 && ev.score < settings.autoHideBelow) {

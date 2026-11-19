@@ -1,7 +1,7 @@
 import { z } from "zod";
 import {
-  aiEvaluationSchema, CV_LANGS, LANGUAGE_LEVELS, tailoredCvSchema, type AiEvaluation, type CvLang, type Profile,
-  type TailoredCv,
+  aiEvaluationSchema, CV_LANGS, LANGUAGE_LEVELS, tailoredCvSchema, type AiEvaluation, type CvIndex, type CvLang,
+  type Profile, type TailoredCv,
 } from "../types";
 import { structuredCall } from "./client";
 import { guardLetter, guardTailoredCv } from "./guard";
@@ -35,12 +35,16 @@ const extractedProfileSchema = z.object({
   certifications: z.array(z.string()),
   languages: z.array(z.object({ name: z.string(), code: z.string(), level: z.enum(LANGUAGE_LEVELS) })),
   projects: z.array(z.object({ name: z.string(), description: z.string(), bullets: z.array(z.string()) })),
-  suggestedRoles: z.array(z.string()),
   yearsExperience: z.number(),
   seniority: z.enum(["junior", "mid", "senior", "lead"]),
+  // indice per la ricerca: è quello che fa trovare le offerte giuste
+  searchTitles: z.array(z.string()),
+  skillIndex: z.array(z.object({ name: z.string(), aliases: z.array(z.string()), weight: z.number() })),
+  domains: z.array(z.string()),
+  keywords: z.array(z.string()),
 });
 
-export async function extractProfile(cvText: string, model: string, previous: Profile): Promise<Profile> {
+export async function extractProfile(cvText: string, model: string, previous: Profile, now = new Date()): Promise<Profile> {
   const out = await structuredCall({
     model,
     maxTokens: 16000,
@@ -50,20 +54,43 @@ export async function extractProfile(cvText: string, model: string, previous: Pr
       "senza aggiungere competenze o risultati che non sono scritti. Mantieni la lingua originale dei testi. " +
       "Date nel formato del CV (es. '03/2021' o '2021'); end vuoto se è il lavoro attuale. " +
       "Per le lingue: code ISO 639-1, level CEFR (A1..C2) o 'native' per la madrelingua; se il livello non è indicato stimalo da parole come 'fluente' (C1), 'buono' (B2), 'scolastico' (A2). " +
-      "suggestedRoles: 3-5 titoli di lavoro in inglese adatti al profilo, da usare come parole chiave di ricerca. " +
-      "yearsExperience: anni totali di esperienza professionale (numero intero).",
+      "yearsExperience: anni totali di esperienza professionale (numero intero). " +
+      "seniority: junior (0-2 anni), mid (3-5), senior (6+), lead (guida persone o team). " +
+      "Poi costruisci l'INDICE DI RICERCA, che serve a trovare offerte adatte su siti di lavoro internazionali: " +
+      "searchTitles: 6-10 titoli di lavoro realistici per cui questo CV verrebbe chiamato a colloquio, dal più adatto; " +
+      "prima i titoli standard in inglese come compaiono negli annunci (es. 'Data Analyst', 'Backend Engineer'), poi 1-3 nella lingua del CV; " +
+      "includi le varianti vicine (ruoli adiacenti per cui l'esperienza è trasferibile), non ruoli troppo senior o fuori campo; niente seniority nei titoli. " +
+      "skillIndex: 10-30 competenze concrete del CV (strumenti, tecnologie, metodi, normative, lingue di programmazione, software, competenze di dominio); " +
+      "name come nel CV; aliases: sinonimi, sigle e traduzioni in inglese e italiano con cui la stessa competenza compare negli annunci " +
+      "(es. 'Gestione progetti' → ['project management', 'PM']; 'Contabilità' → ['accounting', 'bookkeeping']); " +
+      "weight: 3 se è centrale nel lavoro descritto, 2 se usata, 1 se solo citata. Niente soft skill generiche (comunicazione, problem solving). " +
+      "domains: 2-6 settori o domìni in cui il candidato ha lavorato, in inglese (es. 'fintech', 'logistics', 'e-commerce'). " +
+      "keywords: 5-15 altre parole chiave distintive del CV in inglese, come le scriverebbe un annuncio (certificazioni, metodologie, tipi di prodotto).",
     user: `<cv>\n${cvText.slice(0, 60000)}\n</cv>`,
     schema: extractedProfileSchema,
   });
-  const { suggestedRoles, yearsExperience, seniority, ...rest } = out;
+  const { searchTitles, skillIndex, domains, keywords, yearsExperience, seniority, ...rest } = out;
+  const clean = (l: string[]) => [...new Set(l.map((x) => x.trim()).filter(Boolean))];
+  const cvIndex: CvIndex = {
+    titles: clean(searchTitles).slice(0, 12),
+    skills: skillIndex
+      .filter((s) => s.name.trim())
+      .slice(0, 40)
+      .map((s) => ({ name: s.name.trim(), aliases: clean(s.aliases).slice(0, 8), weight: Math.max(1, Math.min(3, Math.round(s.weight) || 2)) })),
+    domains: clean(domains).slice(0, 8),
+    keywords: clean(keywords).slice(0, 20),
+    source: "ai",
+    builtAt: now.toISOString(),
+  };
   return {
     ...rest,
+    // i ruoli scritti a mano restano: si aggiungono ai titoli del CV, non li sostituiscono
     preferences: {
       ...previous.preferences,
-      targetRoles: previous.preferences.targetRoles.length ? previous.preferences.targetRoles : suggestedRoles,
       yearsExperience: Math.max(0, Math.round(yearsExperience)),
       seniority,
     },
+    cvIndex,
   };
 }
 
@@ -81,24 +108,46 @@ export interface JobForAi {
 }
 
 export function profileForPrompt(p: Profile): string {
-  const { preferences, ...cv } = p;
+  // l'indice di ricerca non serve all'AI: è già tutto nel CV
+  const { preferences, cvIndex: _index, ...cv } = p;
   return JSON.stringify({ ...cv, preferences }, null, 1);
 }
 
-export async function evaluateJob(job: JobForAi, profile: Profile, model: string): Promise<AiEvaluation> {
+/** Cosa cerca il candidato (le preferenze), in breve: il resto lo dice il CV. */
+function preferencesForPrompt(p: Profile): string {
+  const pr = p.preferences;
+  const modes = { remote: "remoto", hybrid: "ibrido", onsite: "in sede" } as const;
+  return [
+    `Ruoli che cerca: ${[...(p.cvIndex?.titles ?? []).slice(0, 6), ...pr.targetRoles].join(", ") || "n/d"}`,
+    `Modalità: ${pr.workModes.map((m) => modes[m]).join(", ")}; trasferimento all'estero: ${pr.willingToRelocate ? "sì" : "no"}`,
+    `Esperienza: ${pr.yearsExperience} anni, livello ${pr.seniority}`,
+    `Lingue: ${p.languages.map((l) => `${l.name} ${l.level}`).join(", ") || "n/d"}`,
+  ].join("\n");
+}
+
+export async function evaluateJob(job: JobForAi, profile: Profile, model: string, cvText = ""): Promise<AiEvaluation> {
+  // Il CV originale va nel system prompt, uguale per tutte le offerte: con la cache del prompt costa poco.
+  // Se manca il testo originale (profilo compilato a mano) si usa il CV master strutturato.
+  const cv = cvText.trim().length >= 200 ? cvText.slice(0, 30000) : profileForPrompt(profile);
   const ev = await structuredCall({
     model,
     maxTokens: 4000,
     effort: "low",
     system:
-      "Sei un recruiter severo e onesto. Valuta quanto il candidato ha chance CONCRETE di essere chiamato a colloquio per questa offerta. " +
+      "Sei un recruiter esperto, severo e onesto. Valuta quanto il candidato ha chance CONCRETE di essere chiamato a colloquio per l'offerta. " +
+      "Basa la valutazione sul CV del candidato: esperienze reali, risultati, competenze, formazione. " +
+      "Il CV e l'annuncio possono essere in lingue diverse: riconosci sinonimi, traduzioni e titoli equivalenti " +
+      "(es. 'sviluppatore' = 'developer', 'responsabile amministrativo' = 'finance manager') e le competenze trasferibili da ruoli vicini. " +
       "Il candidato è cittadino UE e vive in Italia. Considera requisiti obbligatori, seniority, anni di esperienza, lingue, idoneità geografica. " +
-      "Non gonfiare il punteggio: 80+ solo se soddisfa quasi tutti i requisiti obbligatori; sotto 40 se mancano requisiti chiave. " +
-      "score: intero 0-100. chance: alta/media/bassa. summary: 2-3 frasi in italiano. " +
+      "I requisiti 'nice to have' / 'preferred' / 'a plus' non sono obbligatori: se mancano abbassano poco il punteggio. " +
+      "Scala: 85-100 soddisfa tutti i requisiti obbligatori e ha esperienza diretta nel ruolo; 65-84 soddisfa quasi tutto; " +
+      "45-64 profilo affine con qualche lacuna colmabile; 20-44 mancano requisiti chiave; sotto 20 ruolo di un altro mestiere. " +
+      "score: intero 0-100. chance: alta (≥65), media (40-64), bassa (<40). summary: 2-3 frasi in italiano, concrete, che citano il CV. " +
       "strengths, gaps (cosa manca), obstacles (ostacoli pratici: lingua, visto, sede, fuso orario…): elenchi brevi in italiano. " +
       `applicationLanguage: lingua in cui va scritta la candidatura (quella dell'annuncio), uno tra ${CV_LANGS.join(", ")}. ` +
       "keywords: 5-12 parole chiave dell'annuncio utili per l'ATS.",
-    user: `<candidato>\n${profileForPrompt(profile)}\n</candidato>\n\n<offerta>\nTitolo: ${job.title}\nAzienda: ${job.company}\nLuogo: ${job.location} (${job.workMode})\nStipendio: ${job.salary ?? "n/d"}\n\n${job.description.slice(0, 15000)}\n</offerta>`,
+    cachedContext: `<cv_candidato>\n${cv}\n</cv_candidato>\n\n<cosa_cerca>\n${preferencesForPrompt(profile)}\n</cosa_cerca>`,
+    user: `<offerta>\nTitolo: ${job.title}\nAzienda: ${job.company}\nLuogo: ${job.location} (${job.workMode})\nStipendio: ${job.salary ?? "n/d"}\n\n${job.description.slice(0, 15000)}\n</offerta>`,
     schema: aiEvaluationSchema,
   });
   return { ...ev, score: Math.max(0, Math.min(100, Math.round(ev.score))) };

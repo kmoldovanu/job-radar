@@ -1,0 +1,220 @@
+{
+ "schemaVersion": 2,
+ "generatedAt": "2026-11-19T14:16:37.296581Z",
+ "title": "Design System: JobRadar",
+ "extensions": {
+  "colorMeta": {
+   "signal": {
+    "role": "primary",
+    "displayName": "Amber blip",
+    "tonalRamp": [
+     "#3d2a05",
+     "#5c3f08",
+     "#7f580c",
+     "#a87411",
+     "#d29318",
+     "#f6b52e",
+     "#ffcf6e",
+     "#ffe8b8"
+    ]
+   },
+   "good": {
+    "role": "state",
+    "displayName": "Green line",
+    "tonalRamp": [
+     "#0b3020",
+     "#104a31",
+     "#156543",
+     "#1d8456",
+     "#25a368",
+     "#2fc27a",
+     "#7fe0ad",
+     "#c6f3da"
+    ]
+   },
+   "sky": {
+    "role": "state",
+    "displayName": "Blue line",
+    "tonalRamp": [
+     "#0e2547",
+     "#143665",
+     "#1b4a88",
+     "#2563b3",
+     "#3478dc",
+     "#4c97f5",
+     "#8dbcff",
+     "#cfe2ff"
+    ]
+   },
+   "violet": {
+    "role": "state",
+    "displayName": "Violet line",
+    "tonalRamp": [
+     "#251b47",
+     "#352766",
+     "#47358a",
+     "#5e48b3",
+     "#7a62d8",
+     "#a184f4",
+     "#c3b1ff",
+     "#e6deff"
+    ]
+   },
+   "bad": {
+    "role": "state",
+    "displayName": "Red line",
+    "tonalRamp": [
+     "#47150f",
+     "#661f17",
+     "#8a2a20",
+     "#b3382b",
+     "#d84c3e",
+     "#f0645a",
+     "#ff9a92",
+     "#ffd5d1"
+    ]
+   },
+   "night": {
+    "role": "neutral",
+    "displayName": "Ink night",
+    "tonalRamp": [
+     "#0a1120",
+     "#0e1728",
+     "#131d30",
+     "#1b273d",
+     "#27344c",
+     "#3a4a66",
+     "#7a89a3",
+     "#edf1f7"
+    ]
+   }
+  },
+  "typographyMeta": {
+   "page-title": {
+    "displayName": "Page title",
+    "purpose": "One per screen."
+   },
+   "card-title": {
+    "displayName": "Card title",
+    "purpose": "Offer and application titles."
+   },
+   "badge-number": {
+    "displayName": "Badge numeral",
+    "purpose": "Score inside the line badge, tabular."
+   }
+  },
+  "shadows": [
+   {
+    "name": "toast",
+    "value": "0 10px 30px rgb(0 0 0 / 0.45)",
+    "purpose": "Only floating toasts."
+   },
+   {
+    "name": "segmented-on",
+    "value": "0 1px 2px rgb(0 0 0 / 0.35)",
+    "purpose": "Active segmented tab."
+   }
+  ],
+  "motion": [
+   {
+    "name": "ease-out-expo",
+    "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+    "purpose": "Card rise (360ms) and station-line fill (700ms)."
+   },
+   {
+    "name": "state",
+    "value": "150ms",
+    "purpose": "Hover and colour transitions."
+   }
+  ],
+  "breakpoints": [
+   {
+    "name": "md",
+    "value": "768px"
+   }
+  ]
+ },
+ "components": [
+  {
+   "name": "Primary Button",
+   "kind": "button",
+   "refersTo": "button-primary",
+   "description": "Main action: search, upload CV, prepare CV.",
+   "html": "<button class=\"ds-btn-primary\">Avvia la ricerca</button>",
+   "css": ".ds-btn-primary{background:#f6b52e;color:#0a1120;border:0;border-radius:10px;min-height:44px;padding:0 16px;font:600 15px Overpass,system-ui,sans-serif;transition:background-color .15s}.ds-btn-primary:hover{background:#ffc855}.ds-btn-primary:focus-visible{outline:2px solid #f6b52e;outline-offset:2px}"
+  },
+  {
+   "name": "Secondary Button",
+   "kind": "button",
+   "refersTo": "button-secondary",
+   "description": "Annuncio, downloads, secondary actions.",
+   "html": "<button class=\"ds-btn-secondary\">Annuncio</button>",
+   "css": ".ds-btn-secondary{background:#1b273d;color:#edf1f7;border:1px solid #3a4a66;border-radius:10px;min-height:44px;padding:0 16px;font:500 15px Overpass,system-ui,sans-serif;transition:border-color .15s}.ds-btn-secondary:hover{border-color:#7a89a3;background:#223049}.ds-btn-secondary:focus-visible{outline:2px solid #f6b52e;outline-offset:2px}"
+  },
+  {
+   "name": "Input",
+   "kind": "input",
+   "refersTo": "input",
+   "description": "Text fields.",
+   "html": "<input class=\"ds-input\" placeholder=\"Nome azienda\">",
+   "css": ".ds-input{background:#0e1728;color:#edf1f7;border:1px solid #3a4a66;border-radius:10px;padding:10px 12px;font:400 16px Overpass,system-ui,sans-serif;caret-color:#f6b52e;outline:none}.ds-input:hover{border-color:#7a89a3}.ds-input:focus{border-color:#f6b52e}"
+  },
+  {
+   "name": "Filter Pill",
+   "kind": "chip",
+   "refersTo": "filter-pill-on",
+   "description": "Sort and filter toggles; on = ink fill.",
+   "html": "<button class=\"ds-pill ds-on\">Punteggio AI</button> <button class=\"ds-pill\">Più recenti</button>",
+   "css": ".ds-pill{min-height:36px;padding:0 12px;border-radius:9px;border:1px solid #3a4a66;background:transparent;color:#9aa8bf;font:600 13px Overpass,system-ui,sans-serif}.ds-pill:hover{color:#edf1f7;border-color:#7a89a3}.ds-pill.ds-on{background:#edf1f7;color:#0a1120;border-color:#edf1f7}"
+  },
+  {
+   "name": "Line Badge",
+   "kind": "custom",
+   "refersTo": "line-badge-ai",
+   "description": "Score: filled = AI, outline = quick estimate from the CV.",
+   "html": "<div class=\"ds-badge\">81</div> <div class=\"ds-badge ds-quick\">64</div>",
+   "css": ".ds-badge{display:inline-grid;place-items:center;width:52px;height:52px;border-radius:12px;background:#2fc27a;color:#0a1120;font:800 22px Overpass,system-ui,sans-serif;font-variant-numeric:tabular-nums}.ds-badge.ds-quick{background:transparent;color:#f6b52e;box-shadow:inset 0 0 0 2.5px #f6b52e}"
+  },
+  {
+   "name": "Card",
+   "kind": "card",
+   "refersTo": "card",
+   "description": "Offer, application and settings containers.",
+   "html": "<article class=\"ds-card\"><h3>Backend Engineer Python</h3><p>Brightfield ∙ Berlino</p></article>",
+   "css": ".ds-card{background:#131d30;border:1px solid #27344c;border-radius:14px;padding:16px;color:#edf1f7;font:400 15px Overpass,system-ui,sans-serif;transition:border-color .15s}.ds-card:hover{border-color:#3a4a66}.ds-card h3{margin:0;font-weight:700;font-size:18px}.ds-card p{margin:4px 0 0;color:#b8c3d5}"
+  }
+ ],
+ "narrative": {
+  "northStar": "Linea della metro",
+  "overview": "The job hunt drawn as a transit line. Every offer is a stop you may board; every application is a ride with stations: Trovata, Inviata, Colloquio, Offerta.",
+  "keyCharacteristics": [
+   "Dark always: ink blue-black ground, a cooler raised layer for cards.",
+   "Colour means state, never decoration. Each state owns a line colour.",
+   "Scores are line badges: rounded squares with a heavy numeral.",
+   "One family, heavy weights for titles, tabular numerals for counts."
+  ],
+  "rules": [
+   {
+    "name": "The Line Colour Rule",
+    "body": "A colour on screen names a state. If something is green it is a strong match or a positive outcome; amber is new or the next action; nothing is tinted for decoration.",
+    "section": "colors"
+   },
+   {
+    "name": "The Middle Dot Rule",
+    "body": "Overpass draws · (U+00B7) with broken spacing; separators use ∙ (U+2219).",
+    "section": "typography"
+   }
+  ],
+  "dos": [
+   "Do give every state its line colour and keep it consistent across pages.",
+   "Do show why an offer scored as it did (\"Dal tuo CV:\" title + skills).",
+   "Do keep controls standard: tabs, selects, buttons, inputs."
+  ],
+  "donts": [
+   "Don't add colour for decoration or gradients.",
+   "Don't use · with Overpass; use ∙.",
+   "Don't use eyebrow labels above headings or emoji as icons.",
+   "Don't turn the transit theme into costume (maps, ticket stubs, station signage as layout)."
+  ]
+ }
+}

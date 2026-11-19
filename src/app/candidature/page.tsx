@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@/components/Icon";
-import { Empty, ErrorBox, PageHeader, Pill, ViaSource } from "@/components/ui";
+import { Empty, ErrorBox, PageHeader, Pill, StationLine, ViaSource } from "@/components/ui";
 import { api, daysAgo, fmtDate } from "@/lib/client";
 import { APPLICATION_STATUSES, type ApplicationStatus } from "@/lib/types";
 
@@ -24,12 +24,14 @@ interface App {
   sourceUrl: string;
 }
 
-const STATUS_STYLE: Record<ApplicationStatus, string> = {
-  inviata: "bg-sky/15 text-sky",
-  colloquio: "bg-signal/15 text-signal",
-  offerta: "bg-good/15 text-good",
-  rifiutato: "bg-panel-2 text-muted",
+/** Ogni stato è una linea: il suo colore e la fermata a cui è arrivata la candidatura. */
+const STATUS_LINE: Record<ApplicationStatus, { color: string; at: number; style: string }> = {
+  inviata: { color: "var(--color-sky)", at: 1, style: "bg-sky/15 text-[#8dbcff]" },
+  colloquio: { color: "var(--color-violet)", at: 2, style: "bg-violet/15 text-[#c3b1ff]" },
+  offerta: { color: "var(--color-good)", at: 3, style: "bg-good/15 text-good" },
+  rifiutato: { color: "var(--color-bad)", at: 1, style: "bg-bad/15 text-[#ff9a92]" },
 };
+const STOPS = ["Trovata", "Inviata", "Colloquio", "Offerta"];
 
 export default function ApplicationsPage() {
   const [apps, setApps] = useState<App[] | null>(null);
@@ -81,8 +83,8 @@ export default function ApplicationsPage() {
       <ErrorBox error={error} />
 
       {due.length > 0 && (
-        <div className="card border-signal/40">
-          <h2 className="text-lg font-semibold text-signal">Follow-up da fare ({due.length})</h2>
+        <div className="card border-signal/50 bg-signal/[0.06]">
+          <h2 className="text-lg font-bold text-signal">Follow-up da fare ({due.length})</h2>
           <p className="text-sm text-muted">
             Nessuna risposta dopo qualche giorno: scrivi un breve messaggio di follow-up al recruiter.
           </p>
@@ -93,7 +95,8 @@ export default function ApplicationsPage() {
                   <b>{a.company}</b> — {a.title}
                 </span>
                 <button className="btn-ghost text-xs" onClick={() => patch(a.id, { followUpDone: true })}>
-                  Fatto ✓
+                  <Icon name="check" className="size-3.5" strokeWidth={2.4} />
+                  Fatto
                 </button>
               </li>
             ))}
@@ -115,22 +118,23 @@ export default function ApplicationsPage() {
 
       <div className="space-y-3">
         {visible.map((a) => (
-          <article key={a.id} className="card space-y-2">
+          <article key={a.id} className="card animate-rise space-y-3">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <h2 className="text-[17px] font-semibold leading-snug">{a.title}</h2>
-                <p className="text-sm text-slate-600 dark:text-slate-300">
+                <h2 className="text-[18px] font-bold leading-snug tracking-[-0.01em]">{a.title}</h2>
+                <p className="text-[15px] font-semibold text-slate-300">
                   {a.company}
-                  {a.location ? ` · ${a.location}` : ""}
+                  {a.location ? ` ∙ ${a.location}` : ""}
                 </p>
                 <p className="mt-1 text-xs text-muted">
-                  Inviata il {fmtDate(a.appliedAt)} ({daysAgo(a.appliedAt)}) · <ViaSource source={a.source} url={a.sourceUrl} />
+                  Inviata il {fmtDate(a.appliedAt)} ({daysAgo(a.appliedAt)}) ∙ <ViaSource source={a.source} url={a.sourceUrl} />
                 </p>
               </div>
               <select
                 value={a.status}
                 onChange={(e) => patch(a.id, { status: e.target.value as ApplicationStatus })}
-                className={`min-h-9 rounded-lg border-0 px-2 text-sm font-medium capitalize ${STATUS_STYLE[a.status]}`}
+                aria-label="Stato della candidatura"
+                className={`min-h-9 shrink-0 cursor-pointer rounded-[8px] border-0 px-2 text-sm font-bold capitalize outline-offset-2 ${STATUS_LINE[a.status].style}`}
               >
                 {APPLICATION_STATUSES.map((s) => (
                   <option key={s} value={s}>
@@ -139,6 +143,12 @@ export default function ApplicationsPage() {
                 ))}
               </select>
             </div>
+            <StationLine
+              stops={a.status === "rifiutato" ? ["Trovata", "Rifiutato", "Colloquio", "Offerta"] : STOPS}
+              at={STATUS_LINE[a.status].at}
+              color={STATUS_LINE[a.status].color}
+              stopped={a.status === "rifiutato"}
+            />
             <div className="flex flex-wrap gap-2 text-sm">
               <a className="btn-secondary" href={a.url} target="_blank" rel="noopener noreferrer">
                 <Icon name="external" className="size-4" />
@@ -158,7 +168,7 @@ export default function ApplicationsPage() {
               )}
               {a.followUpAt && a.status === "inviata" && (
                 <span className={`chip ${a.followUpDone ? "" : new Date(a.followUpAt).getTime() <= now ? "border-signal/50 text-signal" : ""}`}>
-                  {a.followUpDone ? "Follow-up fatto ✓" : `Follow-up: ${fmtDate(a.followUpAt)}`}
+                  {a.followUpDone ? "Follow-up fatto" : `Follow-up: ${fmtDate(a.followUpAt)}`}
                 </span>
               )}
             </div>
