@@ -5,22 +5,29 @@ primary_target: "src/app/page.tsx"
 related_targets: ["src/app/candidature/page.tsx","src/app/profilo/page.tsx","src/app/cerca/page.tsx"]
 ---
 
+---
+version: 1
+slug: "src-app-page-tsx"
+primary_target: "src/app/page.tsx"
+related_targets: ["src/app/candidature/page.tsx","src/app/profilo/page.tsx","src/app/cerca/page.tsx"]
+---
+
 # JobRadar app shell (Offerte, Cerca, Candidature, Profilo, Impostazioni)
 
-Scope: the whole authenticated app; visitor mode Operate. Task: scan new offers ranked against the uploaded CV, judge, dismiss or apply; on desktop read ads and prepare tailored CVs/letters. Constraints: dark, radar mark stays, Italian copy, mobile bottom bar + desktop nav, standard controls.
+Scope: the whole authenticated app; visitor mode Operate. Task: scan new offers ranked against the uploaded CV, judge, dismiss or apply; on desktop read ads and prepare tailored CVs/letters. Constraints: radar mark stays, Italian copy, mobile bottom bar + desktop nav, standard controls.
 
 ## Direction contract
 
-FORM: seed:89b93f0c24f37fd3 (degraded roll, no challengers). Direction: "Linea della metro".
+FORM: owner-pinned reference (www.job-radar.io), in dark, after the owner rejected the "Linea della metro" direction and then asked for this style dark, with a clearer match and more motion. Seed: none (pinned by the user).
 
-THESIS: The job hunt as a transit line: every offer is a stop you may board, every application a ride with stations. Refuses the category default of grey cards with one accent and a percent badge.
+THESIS: A calm, dark working tool where the only colour is the coral of the radar blip, and it always means "this matters": new, strong match, the next thing to do. Refuses multi-colour state systems, heavy display type and decorative motion.
 
-OWN-WORLD: Ink blue-black ground with a cooler raised layer. Four line colours carry state: green (match/strong, Offerta), amber (the radar blip; Nuova, primary action), blue (Inviata/info), red (gaps/rifiutato). Line badges: rounded squares with a bold numeral, like U-Bahn line roundels. One workhorse transit-signage grotesk, wide and clear, tabular numerals.
+OWN-WORLD: Black ground, #111 cards, light ink, warm-black summary panels, one coral (#ff5c3d). Geist for text, Geist Mono small and tracked for data and status. Light pill buttons, outlined pill chips, 16px cards with a hairline border.
 
-STORY: Open the app, see the newest best-matching offers first, each with its line badge (score) and why it matches your CV; one tap to the ad, one to apply.
+STORY: Open the app, see how many new offers wait (coral dot), each card leads with its match as a big number with a bar ("Match AI" or "Stima CV") and why (titles and skills from the CV).
 
-FIRST VIEWPORT: App bar with radar mark; title with counts as a strip; segmented tabs; offer cards where the line badge leads the row, title, company and city, then the CV reason line (matched title + skills found).
+FIRST VIEWPORT: Floating dark pill nav with the radar mark; page title with a mono live line; pill tabs and filters; offer cards with mono status, title, company, mono meta, match meter top right.
 
-SIGNATURE: Applications drawn as a line with stations Trovata → Inviata → Colloquio → Offerta, filled up to the current one in its line colour; the CV page shows "cosa ho capito dal CV" as stations too.
+SIGNATURE: Coral radar with a slowly turning sweep behind the Offerte header; the match meter that counts up; motion that answers actions (sliding tab pill, dismissed cards leaving, details expanding).
 
-RISK: Transit theming turning into costume; kept to type, palette, badges and the station line only.
+RISK: Generic black-plus-accent look; held off by the coral discipline, the mono data voice and the radar.

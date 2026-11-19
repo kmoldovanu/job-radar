@@ -82,7 +82,7 @@ export default function SettingsPage() {
         <h2 className="text-lg font-semibold">Fonti attive</h2>
         {SOURCES.map(([k, name, desc]) => (
           <label key={k} className="flex min-h-10 items-center gap-3 text-[15px]">
-            <input type="checkbox" className="size-5 accent-signal" checked={s.sources[k]} onChange={(e) => setS({ ...s, sources: { ...s.sources, [k]: e.target.checked } })} />
+            <input type="checkbox" className="size-5 accent-ink" checked={s.sources[k]} onChange={(e) => setS({ ...s, sources: { ...s.sources, [k]: e.target.checked } })} />
             <span><b className="font-medium">{name}</b> <span className="text-muted">{desc}</span></span>
           </label>
         ))}
@@ -95,7 +95,7 @@ export default function SettingsPage() {
           {ADZUNA_COUNTRIES.map((c) => (
             <label key={c} className="flex items-center gap-2">
               <input
-                type="checkbox" className="size-5 accent-signal"
+                type="checkbox" className="size-5 accent-ink"
                 checked={s.adzunaCountries.includes(c)}
                 onChange={(e) =>
                   setS({ ...s, adzunaCountries: e.target.checked ? [...s.adzunaCountries, c] : s.adzunaCountries.filter((x) => x !== c) })

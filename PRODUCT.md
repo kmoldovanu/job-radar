@@ -30,8 +30,8 @@ JobRadar searches official job APIs and company career pages worldwide, filters 
 - Demo mode blocks anything that costs money or calls external services.
 
 ## Brand Commitments
-- Name: JobRadar. The radar mark (concentric rings, sweep, one amber blip) stays as the symbol.
-- The app stays dark.
+- Name: JobRadar. The radar mark (concentric rings, sweep, one coral blip) stays as the symbol.
+- Dark, clean look with one coral accent and quiet motion, chosen by the owner after rejecting a heavy multi-colour "transit" redesign; visual reference given by the owner: www.job-radar.io (take the language, never its logo or copy). The match must be readable at a glance.
 - Language: Italian, plain and direct.
 
 ## Evidence on Hand

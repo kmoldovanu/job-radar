@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { m } from "motion/react";
 import { Icon, RadarMark, type IconName } from "./Icon";
+import { spring } from "./motion";
 
 const ITEMS: { href: string; label: string; icon: IconName }[] = [
   { href: "/", label: "Offerte", icon: "offers" },
@@ -18,32 +20,33 @@ export function Nav() {
   const active = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
   return (
     <>
-      <header className="pt-safe sticky top-0 z-20 border-b border-line bg-night/90 backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-4xl items-center gap-1 px-4">
+      {/* in alto: barra bianca a pillola che resta sospesa sopra la pagina */}
+      <header className="pt-safe sticky top-0 z-20 bg-night/80 backdrop-blur-md md:bg-transparent md:px-4 md:pt-3 md:backdrop-blur-none">
+        <div className="mx-auto flex h-14 max-w-4xl items-center gap-1 border-b border-line px-4 md:h-[58px] md:rounded-full md:border md:bg-panel/85 md:pr-2 md:pl-5 md:shadow-[0_12px_32px_-16px_rgb(0_0_0/0.9)] md:backdrop-blur-md">
           <Link href="/" className="mr-auto flex items-center gap-2" aria-label="JobRadar, vai alle offerte">
             <RadarMark className="size-7" />
-            <span className="text-[18px] font-extrabold tracking-[-0.02em]">JobRadar</span>
+            <span className="text-[17px] font-semibold tracking-[-0.02em]">JobRadar</span>
           </Link>
           {/* desktop */}
-          <nav className="hidden gap-1 md:flex" aria-label="Sezioni">
+          <nav className="hidden gap-0.5 md:flex" aria-label="Sezioni">
             {ITEMS.map((i) => (
               <Link
                 key={i.href}
                 href={i.href}
                 aria-current={active(i.href) ? "page" : undefined}
-                className={`relative flex h-14 items-center px-3 text-sm font-semibold transition-colors duration-150 ${active(i.href) ? "text-ink after:absolute after:inset-x-3 after:bottom-0 after:h-[3px] after:rounded-t-full after:bg-signal" : "text-muted hover:text-ink"}`}
+                className={`relative rounded-full px-3.5 py-2 text-sm font-medium transition-colors duration-150 ${active(i.href) ? "text-night" : "text-slate-300 hover:text-ink"}`}
               >
-                {i.label}
+                {active(i.href) && (
+                  <m.span layoutId="nav-pill" className="absolute inset-0 rounded-full bg-ink" transition={spring} aria-hidden="true" />
+                )}
+                <span className="relative">{i.label}</span>
               </Link>
             ))}
           </nav>
         </div>
       </header>
       {/* telefono: barra in basso, sopra l'indicatore home dell'iPhone */}
-      <nav
-        aria-label="Sezioni"
-        className="pb-safe fixed inset-x-0 bottom-0 z-20 border-t border-line bg-night/95 backdrop-blur-md md:hidden"
-      >
+      <nav aria-label="Sezioni" className="pb-safe fixed inset-x-0 bottom-0 z-20 border-t border-line bg-night/85 backdrop-blur-md md:hidden">
         <div className="grid grid-cols-5">
           {ITEMS.map((i) => {
             const on = active(i.href);
@@ -52,10 +55,13 @@ export function Nav() {
                 key={i.href}
                 href={i.href}
                 aria-current={on ? "page" : undefined}
-                className={`relative flex min-h-[58px] flex-col items-center justify-center gap-1 text-[11px] ${on ? "text-ink before:absolute before:inset-x-5 before:top-0 before:h-[3px] before:rounded-b-full before:bg-signal" : "text-muted"}`}
+                className={`relative flex min-h-[58px] flex-col items-center justify-center gap-1 text-[11px] font-medium ${on ? "text-ink" : "text-faint"}`}
               >
-                <Icon name={i.icon} className={`size-[22px] ${on ? "text-signal" : ""}`} strokeWidth={on ? 2.2 : 1.7} />
-                <span className={on ? "font-bold" : "font-medium"}>{i.label}</span>
+                <span className="relative">
+                  <Icon name={i.icon} className="size-[22px]" strokeWidth={on ? 2 : 1.6} />
+                  {on && <m.span layoutId="tab-dot" transition={spring} className="absolute -top-0.5 -right-1 size-1.5 rounded-full bg-signal" aria-hidden="true" />}
+                </span>
+                {i.label}
               </Link>
             );
           })}

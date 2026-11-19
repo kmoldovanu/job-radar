@@ -1,72 +1,67 @@
 @import "tailwindcss";
 
-/* L'app è sempre in tema scuro: le varianti dark: si applicano ovunque. */
-@custom-variant dark (&:where(.dark, .dark *));
-
 /*
- * "Linea della metro": inchiostro blu-nero, colori di linea che portano lo stato
- * (verde = adatta / offerta, ambra = nuova / azione, blu = inviata / info, viola = colloquio, rosso = lacune / rifiuto),
- * badge-linea quadrati arrotondati, un solo carattere da segnaletica (Overpass) con cifre tabellari.
+ * Stile scuro e pulito: fondo nero, testo chiaro, un solo accento corallo
+ * (novità, match, il punto del radar), bottoni chiari a pillola, bordi sottili,
+ * Geist per i testi e Geist Mono piccolo e spaziato per etichette e dati.
+ *
+ * I nomi dei token restano quelli storici dell'app (night = fondo pagina, panel = card, ink = testo…).
  */
 @theme {
   --font-sans: var(--font-body), ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-display: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-code), ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --color-night: #0a1120;
-  --color-rail: #0e1728;
-  --color-panel: #131d30;
-  --color-panel-2: #1b273d;
-  --color-line: #27344c;
-  --color-line-strong: #3a4a66;
-  --color-ink: #edf1f7;
-  --color-muted: #9aa8bf;
-  --color-faint: #7a89a3;
+  --color-night: #000000;
+  --color-rail: #0c0c0c;
+  --color-panel: #111111;
+  --color-panel-2: #1c1c1c;
+  --color-line: #222222;
+  --color-line-strong: #333333;
+  --color-hover: #444444;
+  --color-ink: #ededed;
+  --color-muted: #a3a3a3;
+  --color-faint: #8b8b8b;
+  /* pannelli di riepilogo: un nero caldo */
+  --color-cream: #1a1510;
 
-  /* colori di linea */
-  --color-signal: #f6b52e;
-  --color-signal-strong: #ffc855;
-  --color-good: #2fc27a;
-  --color-bad: #f0645a;
-  --color-sky: #4c97f5;
-  --color-violet: #a184f4;
+  /* accento: corallo, 6.9:1 sul nero */
+  --color-signal: #ff5c3d;
+  --color-signal-strong: #ff7a5f;
+  /* stati, usati con parsimonia (pallini, testo piccolo) */
+  --color-good: #4ade80;
+  --color-bad: #f87171;
+  --color-sky: #60a5fa;
+  --color-violet: #a78bfa;
+  --color-amber: #fbbf24;
 
-  /* slate rimappato sulla palette, così anche le pagine esistenti restano coerenti */
-  --color-slate-50: #f4f7fb;
-  --color-slate-100: #edf1f7;
-  --color-slate-200: #d3dbe8;
-  --color-slate-300: #b8c3d5;
-  --color-slate-400: #9aa8bf;
-  --color-slate-500: #808fa8;
-  --color-slate-600: #7a89a3;
-  --color-slate-700: #27344c;
-  --color-slate-800: #1b273d;
-  --color-slate-900: #131d30;
-  --color-slate-950: #0a1120;
-
-  --color-brand-50: #2a2310;
-  --color-brand-100: #3d3216;
-  --color-brand-500: #f6b52e;
-  --color-brand-600: #f6b52e;
-  --color-brand-700: #ffc855;
+  /* slate rimappato: nelle pagine slate-200/300 sono "testo quasi pieno" */
+  --color-slate-50: #fafafa;
+  --color-slate-100: #f5f5f5;
+  --color-slate-200: #e5e5e5;
+  --color-slate-300: #d4d4d4;
+  --color-slate-400: #a3a3a3;
+  --color-slate-500: #8b8b8b;
+  --color-slate-600: #525252;
+  --color-slate-700: #333333;
+  --color-slate-800: #222222;
+  --color-slate-900: #1c1c1c;
+  --color-slate-950: #000000;
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 
   --animate-ping-slow: ping-slow 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
   @keyframes ping-slow {
-    0% { transform: scale(1); opacity: 0.7; }
+    0% { transform: scale(1); opacity: 0.6; }
     70%, 100% { transform: scale(2.6); opacity: 0; }
   }
-  --animate-rise: rise 360ms var(--ease-out-expo) both;
+  --animate-rise: rise 320ms var(--ease-out-expo) both;
   @keyframes rise {
-    from { transform: translateY(8px); opacity: 0.001; }
+    from { transform: translateY(6px); opacity: 0.001; }
   }
   --animate-sweep: sweep 3.2s linear infinite;
   @keyframes sweep {
     to { transform: rotate(360deg); }
-  }
-  --animate-fill: fill 700ms var(--ease-out-expo) both;
-  @keyframes fill {
-    from { transform: scaleX(0); }
   }
 }
 
@@ -84,17 +79,16 @@ html {
 body {
   @apply bg-night font-sans text-ink antialiased;
   -webkit-tap-highlight-color: transparent;
-  overscroll-behavior-y: none;
+  overflow-x: clip;
 }
 
 ::selection {
-  background: color-mix(in oklab, var(--color-signal) 40%, transparent);
+  background: color-mix(in oklab, var(--color-signal) 35%, transparent);
   color: var(--color-ink);
 }
 
 h1, h2, h3 {
   font-family: var(--font-display);
-  letter-spacing: -0.015em;
   text-wrap: balance;
 }
 
@@ -103,7 +97,7 @@ a {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-signal);
+  outline: 2px solid var(--color-ink);
   outline-offset: 2px;
 }
 
@@ -119,33 +113,37 @@ a {
 .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
 
 @utility card {
-  @apply rounded-[14px] border border-line bg-panel p-4;
+  @apply rounded-2xl border border-line bg-panel p-4 sm:p-5;
 }
 @utility btn {
-  @apply inline-flex min-h-11 items-center justify-center gap-1.5 rounded-[10px] px-4 text-[15px] font-semibold transition-[background-color,border-color,color,transform] duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40;
+  @apply inline-flex min-h-10 items-center justify-center gap-1.5 rounded-full px-4 text-sm font-medium transition-[background-color,border-color,color,transform] duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40;
 }
 @utility btn-primary {
-  @apply btn bg-signal text-night hover:bg-signal-strong;
+  @apply btn bg-ink text-night hover:bg-white;
 }
 @utility btn-secondary {
-  @apply btn border border-line-strong bg-panel-2 font-medium text-ink hover:border-faint hover:bg-[#223049];
+  @apply btn border border-line-strong bg-panel text-ink hover:border-hover hover:bg-panel-2;
 }
 @utility btn-success {
-  @apply btn bg-good text-night hover:brightness-110;
+  @apply btn bg-ink text-night hover:bg-white;
 }
 @utility btn-ghost {
-  @apply btn font-medium text-muted hover:bg-panel-2 hover:text-ink;
+  @apply btn text-muted hover:bg-panel-2 hover:text-ink;
 }
 @utility btn-icon {
-  @apply inline-flex size-11 shrink-0 items-center justify-center rounded-[10px] border border-line-strong bg-panel-2 text-muted transition-colors duration-150 hover:text-ink active:scale-95 disabled:opacity-40;
+  @apply inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-line-strong bg-panel text-muted transition-colors duration-150 hover:border-hover hover:text-ink active:scale-95 disabled:opacity-40;
 }
 @utility input {
   /* 16px: sotto questa misura Safari su iPhone fa zoom quando tocchi il campo */
-  @apply w-full rounded-[10px] border border-line-strong bg-rail px-3 py-2.5 text-base text-ink caret-signal outline-none transition-colors duration-150 placeholder:text-faint hover:border-faint focus:border-signal;
+  @apply w-full rounded-xl border border-line-strong bg-rail px-3 py-2.5 text-base text-ink caret-signal outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-faint hover:border-hover focus:border-ink focus:shadow-[0_0_0_3px_rgb(255_255_255/0.08)];
 }
 @utility label {
-  @apply mb-1.5 block text-[13px] font-semibold text-muted;
+  @apply mb-1.5 block text-[13px] font-medium text-muted;
 }
 @utility chip {
-  @apply inline-flex items-center gap-1 rounded-md bg-panel-2 px-2 py-0.5 text-xs font-medium text-slate-200;
+  @apply inline-flex items-center gap-1 rounded-full border border-line-strong px-2.5 py-0.5 text-xs font-medium text-slate-300;
+}
+/* etichetta mono piccola e spaziata, per dati e stati (non sopra i titoli) */
+@utility mono {
+  @apply font-mono text-[11px] font-normal uppercase tracking-[0.1em];
 }

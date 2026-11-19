@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
-import { Empty, ErrorBox, PageHeader, Pill, Progress, LineBadge, SeenBadge, Segmented, Toast, ViaSource } from "@/components/ui";
+import { AnimatePresence, m } from "motion/react";
+import { exitFast, spring } from "@/components/motion";
+import { Empty, ErrorBox, LiveLine, matchColor, MatchMeter, Meter, PageHeader, Pill, Progress, SeenBadge, Segmented, Toast, ViaSource } from "@/components/ui";
 import { api, companySearchUrl, daysAgo } from "@/lib/client";
 import { runQueue } from "@/lib/queue";
 import type { AiEvaluation, MatchDetails, TailoredCv } from "@/lib/types";
@@ -250,12 +252,13 @@ export default function OffersPage() {
   const notTailored = visible.filter((j) => !j.hasTailored).length;
 
   return (
-    <div className="space-y-4">
+    <div className="relative isolate space-y-4">
+      <RadarRings />
       <PageHeader
         title="Offerte"
-        subtitle={counts ? `${counts.new} da vedere ∙ ${counts.seen} già viste` : "Caricamento…"}
+        subtitle={<LiveLine>{counts ? `${counts.new} da vedere ∙ ${counts.seen} già viste` : "Caricamento…"}</LiveLine>}
         action={
-          <Link href="/cerca" className="btn-secondary">
+          <Link href="/cerca" className="btn-primary">
             <Icon name="search" className="size-4" />
             Cerca
           </Link>
@@ -297,13 +300,11 @@ export default function OffersPage() {
       <ErrorBox error={error} />
 
       {view !== "dismissed" && jobs && jobs.length > 0 && (
-        <details ref={toolsRef} className="group rounded-[14px] border border-line bg-panel">
+        <details ref={toolsRef} className="group rounded-2xl border border-line bg-panel">
           <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 px-4 text-sm font-medium [&::-webkit-details-marker]:hidden">
             <Icon name="sparkle" className="size-4 text-signal" />
             Strumenti AI
-            <span className="text-muted">
-              {counts?.noAi ? `∙ ${counts.noAi} senza valutazione AI` : "∙ tutte valutate"}
-            </span>
+            <span className="mono ml-1 text-faint">{counts?.noAi ? `${counts.noAi} senza valutazione` : "tutte valutate"}</span>
             <Icon name="chevron" className="ml-auto size-4 text-muted transition-transform group-open:rotate-180" />
           </summary>
           <div className="space-y-4 border-t border-line p-4">
@@ -349,16 +350,16 @@ export default function OffersPage() {
       )}
 
       {evalReport && (
-        <div className="card space-y-2 border-signal/30" role="status">
+        <div className="space-y-2 rounded-2xl bg-cream p-5" role="status">
           <div className="flex items-start justify-between gap-2">
             <h2 className="text-lg font-semibold">Valutazione AI finita</h2>
-            <button className="btn-icon size-9" onClick={() => setEvalReport(null)} aria-label="Chiudi">
+            <button className="btn-icon size-9 bg-transparent" onClick={() => setEvalReport(null)} aria-label="Chiudi">
               <Icon name="x" className="size-4" />
             </button>
           </div>
           <p className="text-sm">
             {evalReport.done} offerte valutate: <span className="text-good">{evalReport.alta} chance alta</span>,{" "}
-            <span className="text-signal">{evalReport.media} media</span>, <span className="text-bad">{evalReport.bassa} bassa</span>.
+            <span className="text-amber">{evalReport.media} media</span>, <span className="text-bad">{evalReport.bassa} bassa</span>.
             {evalReport.done > evalReport.hidden && " Le vedi qui sotto, dalla più adatta."}
           </p>
           {evalReport.hidden > 0 && (
@@ -414,13 +415,43 @@ export default function OffersPage() {
       )}
 
       <div className="space-y-3">
-        {visible.map((j) => (
-          <JobCard key={j.id} job={j} hideBelow={hideBelow} onSeen={setSeen} onRemoved={removed} onChange={load} />
-        ))}
+        <AnimatePresence mode="popLayout" initial={false}>
+          {visible.map((j, i) => (
+            <JobCard key={j.id} index={i} job={j} hideBelow={hideBelow} onSeen={setSeen} onRemoved={removed} onChange={load} />
+          ))}
+        </AnimatePresence>
       </div>
 
-      {toast && <Toast {...toast} />}
+      <AnimatePresence>{toast && <Toast key={toast.message} {...toast} />}</AnimatePresence>
     </div>
+  );
+}
+
+/** Il radar dietro l'intestazione (solo da computer): anelli corallo e una scia che gira lenta. */
+function RadarRings() {
+  return (
+    <svg viewBox="0 0 400 400" className="pointer-events-none absolute -top-40 right-[-80px] -z-10 hidden size-[400px] md:block" aria-hidden="true">
+      <defs>
+        <linearGradient id="sweep" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#ff5c3d" stopOpacity="0" />
+          <stop offset="1" stopColor="#ff5c3d" stopOpacity="0.28" />
+        </linearGradient>
+      </defs>
+      <g fill="none" stroke="#ff5c3d" strokeOpacity="0.16">
+        <circle cx="200" cy="200" r="70" />
+        <circle cx="200" cy="200" r="130" />
+        <circle cx="200" cy="200" r="190" />
+      </g>
+      {/* ruota attorno al centro del radar; con "riduci movimento" resta ferma (regola globale in globals.css) */}
+      <g className="animate-[sweep_9s_linear_infinite]" style={{ transformBox: "view-box", transformOrigin: "200px 200px" }}>
+        {/* scia: uno spicchio di 50° che sfuma verso la lancetta */}
+        <path d="M200 200 L390 200 A190 190 0 0 0 322 54 Z" fill="url(#sweep)" />
+        <path d="M200 200 L390 200" stroke="#ff5c3d" strokeOpacity="0.6" strokeWidth="1.2" strokeLinecap="round" />
+      </g>
+      <circle cx="292" cy="262" r="4" fill="#ff5c3d" fillOpacity="0.8" />
+      <circle cx="96" cy="150" r="3" fill="#ff5c3d" fillOpacity="0.45" />
+      <circle cx="200" cy="200" r="3" fill="#ededed" />
+    </svg>
   );
 }
 
@@ -441,9 +472,10 @@ function SkeletonList() {
 }
 
 function JobCard({
-  job, hideBelow, onSeen, onRemoved, onChange,
+  job, index, hideBelow, onSeen, onRemoved, onChange,
 }: {
   job: JobRow;
+  index: number;
   hideBelow: number;
   onSeen: (job: JobRow, seen: boolean) => void;
   onRemoved: (job: JobRow, kind: "apply" | "dismiss" | "restore" | "hidden", score?: number) => void;
@@ -498,45 +530,49 @@ function JobCard({
   const dl = (doc: string, format: string) => `/api/jobs/${idEnc}/download?doc=${doc}&format=${format}`;
   const markSeenOnOpen = () => !seen && !dismissed && onSeen(job, true);
 
-  const m = job.match;
+  const jm = job.match;
   return (
-    <article
-      className={`card animate-rise space-y-3 transition-colors duration-150 hover:border-line-strong ${!seen && !dismissed ? "bg-[#152036]" : ""}`}
+    <m.article
+      layout="position"
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0, transition: { ...spring, delay: Math.min(index, 8) * 0.045 } }}
+      exit={{ opacity: 0, x: -28, scale: 0.98, transition: exitFast }}
+      transition={spring}
+      className="card space-y-3.5 transition-[border-color,box-shadow] duration-150 hover:border-line-strong hover:shadow-[0_16px_40px_-24px_rgb(0_0_0/0.9)]"
     >
-      <div className="flex gap-3.5">
-        <LineBadge score={score} ai={!!ev} />
+      <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
-          <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
+          <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1">
             {!dismissed && <SeenBadge seen={seen} />}
-            {dismissed && ev && hideBelow > 0 && ev.score < hideBelow && (
-              <span className="text-[11px] font-medium text-muted">Nascosta in automatico: punteggio AI sotto {hideBelow}</span>
-            )}
+            {dismissed && ev && hideBelow > 0 && ev.score < hideBelow && <span className="mono text-faint">Nascosta: AI sotto {hideBelow}</span>}
             {ev && <ChanceTag chance={ev.chance} />}
             {(job.hasTailored || t) && (
-              <span className="inline-flex items-center gap-1 rounded-md bg-good/15 px-2 py-0.5 text-[11px] font-bold text-good">
-                <Icon name="file" className="size-3" strokeWidth={2.2} />
+              <span className="mono inline-flex items-center gap-1 text-good">
+                <Icon name="check" className="size-3" strokeWidth={2.4} />
                 CV pronto
               </span>
             )}
           </div>
-          <h2 className={`text-[18px] font-bold leading-snug tracking-[-0.01em] ${seen ? "text-slate-200" : "text-ink"}`}>{job.title}</h2>
-          <p className="mt-0.5 text-[15px] text-slate-300">
-            <span className="font-semibold">{job.company}</span>
-            {job.location ? <span className="text-muted"> ∙ {job.location}</span> : null}
+          <h2 className={`text-[17px] font-semibold leading-snug tracking-[-0.015em] ${seen ? "text-slate-300" : "text-ink"}`}>{job.title}</h2>
+          <p className="mt-0.5 text-[15px] text-muted">
+            <span className="font-medium text-slate-200">{job.company}</span>
+            {job.location ? <> ∙ {job.location}</> : null}
           </p>
-          <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5">
-            {MODE[job.workMode] && <span className="chip">{MODE[job.workMode]}</span>}
-            {job.salary && <span className="chip">{job.salary}</span>}
-            {job.postedAt && <span className="text-xs text-muted">{daysAgo(job.postedAt)}</span>}
-            <ViaSource source={job.source} url={job.sourceUrl} />
-          </div>
         </div>
+        <MatchMeter score={score} ai={!!ev} />
+      </div>
+
+      <div className="mono flex flex-wrap items-center gap-x-2.5 gap-y-1 text-faint">
+        {MODE[job.workMode] && <span>{MODE[job.workMode]}</span>}
+        {job.salary && <span className="normal-case tracking-normal">{job.salary}</span>}
+        {job.postedAt && <span>{daysAgo(job.postedAt)}</span>}
+        <ViaSource source={job.source} url={job.sourceUrl} />
       </div>
 
       {ev?.summary ? (
-        <p className="text-[15px] leading-relaxed text-slate-200">{ev.summary}</p>
-      ) : m ? (
-        <CvReason match={m} />
+        <p className="text-[15px] leading-relaxed text-slate-300">{ev.summary}</p>
+      ) : jm ? (
+        <CvReason match={jm} />
       ) : null}
 
       {dismissed ? (
@@ -577,14 +613,23 @@ function JobCard({
       <button
         onClick={toggle}
         aria-expanded={open}
-        className="-mb-1 flex min-h-10 w-full items-center justify-center gap-1 rounded-[8px] text-[13px] font-semibold text-muted transition-colors duration-150 hover:bg-panel-2 hover:text-ink"
+        className="-mb-1 flex min-h-9 w-full items-center justify-center gap-1 rounded-full text-[13px] font-medium text-muted transition-colors duration-150 hover:bg-panel-2 hover:text-ink"
       >
         {open ? "Meno dettagli" : "Dettagli, CV e lettera"}
         <Icon name="chevron" className={`size-4 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       <ErrorBox error={err} />
 
+      <AnimatePresence initial={false}>
       {open && (
+        <m.div
+          key="details"
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: "auto", opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ height: spring, opacity: { duration: 0.2 } }}
+          className="overflow-hidden"
+        >
         <div className="space-y-4 border-t border-line pt-4 text-sm">
           <div className="flex flex-wrap gap-2">
             <a
@@ -612,23 +657,14 @@ function JobCard({
           {ev && (
             <div className="grid gap-4 sm:grid-cols-3">
               <List title="Punti di forza" items={ev.strengths} dot="bg-good" />
-              <List title="Cosa manca" items={ev.gaps} dot="bg-signal" />
+              <List title="Cosa manca" items={ev.gaps} dot="bg-amber" />
               <List title="Ostacoli" items={ev.obstacles} dot="bg-bad" />
             </div>
           )}
-          {job.match && (
-            <p className="text-xs leading-relaxed text-muted">
-              Stima rapida dal CV {job.match.score}/100: titolo {job.match.titleScore}%
-              {job.match.titleMatch ? ` (vicino a «${job.match.titleMatch}»)` : ""}, competenze del CV trovate{" "}
-              {job.match.skillsFound.join(", ") || "nessuna"}
-              {job.match.keywordsFound?.length ? `, parole chiave: ${job.match.keywordsFound.join(", ")}` : ""}
-              {job.match.yearsRequired != null ? `, richiede ${job.match.yearsRequired}+ anni` : ""}
-              {job.match.notes.length ? `. ${job.match.notes.join("; ")}` : ""}
-            </p>
-          )}
+          <MatchBreakdown match={job.match} ev={ev} />
 
           {(job.hasTailored || t) && (
-            <div className="space-y-3 rounded-[12px] bg-rail p-3">
+            <div className="space-y-3 rounded-xl bg-rail p-4">
               <div className="flex items-center justify-between gap-2">
                 <h3 className="font-semibold">
                   CV su misura {t && <span className="text-muted">({t.language.toUpperCase()})</span>}
@@ -673,19 +709,22 @@ function JobCard({
             <p className="text-muted">Caricamento…</p>
           )}
         </div>
+        </m.div>
       )}
-    </article>
+      </AnimatePresence>
+    </m.article>
   );
 }
 
-const CHANCE_STYLE: Record<string, string> = {
-  alta: "bg-good/15 text-good",
-  media: "bg-signal/15 text-signal",
-  bassa: "bg-bad/15 text-bad",
-};
+const CHANCE_DOT: Record<string, string> = { alta: "bg-good", media: "bg-amber", bassa: "bg-bad" };
 
 function ChanceTag({ chance }: { chance: string }) {
-  return <span className={`rounded-md px-2 py-0.5 text-[11px] font-bold ${CHANCE_STYLE[chance] ?? "bg-panel-2 text-muted"}`}>chance {chance}</span>;
+  return (
+    <span className="mono inline-flex items-center gap-1.5 text-muted">
+      <span className={`size-1.5 rounded-full ${CHANCE_DOT[chance] ?? "bg-faint"}`} aria-hidden="true" />
+      chance {chance}
+    </span>
+  );
 }
 
 /** Perché questa offerta: il titolo del CV più vicino e le competenze del CV trovate nell'annuncio. */
@@ -694,18 +733,64 @@ function CvReason({ match }: { match: MatchDetails }) {
   const more = match.skillsFound.length - skills.length;
   if (!match.titleMatch && !skills.length && !match.notes.length) return null;
   return (
-    <div className="space-y-1.5 text-[13px] leading-relaxed">
+    <div className="space-y-2">
       {(match.titleMatch || skills.length > 0) && (
-        <p className="flex flex-wrap items-center gap-1.5 text-slate-300">
-          <span className="font-semibold text-muted">Dal tuo CV:</span>
-          {match.titleMatch && match.titleScore >= 50 && <span className="rounded-md bg-sky/15 px-1.5 py-px font-semibold text-[#8dbcff]">{match.titleMatch}</span>}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="mono mr-1 text-faint">Dal tuo CV</span>
+          {match.titleMatch && match.titleScore >= 50 && <span className="chip border-ink text-ink">{match.titleMatch}</span>}
           {skills.map((s) => (
-            <span key={s} className="rounded-md bg-panel-2 px-1.5 py-px font-medium text-slate-200">{s}</span>
+            <span key={s} className="chip">{s}</span>
           ))}
-          {more > 0 && <span className="text-muted">+{more}</span>}
-        </p>
+          {more > 0 && <span className="font-mono text-xs text-faint">+{more}</span>}
+        </div>
       )}
-      {match.notes.length > 0 && <p className="text-signal">{match.notes.join(" ∙ ")}</p>}
+      {match.notes.length > 0 && <p className="text-[13px] text-amber">{match.notes.join(" ∙ ")}</p>}
+    </div>
+  );
+}
+
+/** Come è fatto il match: valutazione AI e stima dal CV, con barre e cosa ha trovato. */
+function MatchBreakdown({ match, ev }: { match: MatchDetails | null; ev: AiEvaluation | null }) {
+  if (!match && !ev) return null;
+  return (
+    <section className="space-y-3.5 rounded-xl bg-rail p-4" aria-label="Come è calcolato il match">
+      <h3 className="text-[15px] font-semibold">Come è calcolato il match</h3>
+      {ev && (
+        <Row label="Valutazione AI" value={`${Math.round(ev.score)}%`} pct={ev.score} color={matchColor(ev.score, true)}>
+          Legge l&apos;annuncio intero e il tuo CV come un recruiter: chance {ev.chance}.
+        </Row>
+      )}
+      {match && (
+        <>
+          <Row label="Titolo" value={`${match.titleScore}%`} pct={match.titleScore} color="var(--color-ink)">
+            {match.titleMatch ? <>Il più vicino nel tuo CV: <b className="font-medium text-ink">{match.titleMatch}</b></> : "Nessun titolo del CV somiglia a questo."}
+          </Row>
+          <Row
+            label="Competenze del CV"
+            value={`${match.skillsFound.length}`}
+            pct={Math.min(100, (match.skillsFound.length / 5) * 100)}
+            color="var(--color-ink)"
+          >
+            {match.skillsFound.length ? match.skillsFound.join(", ") : "Nessuna trovata nell'annuncio."}
+          </Row>
+          {(match.keywordsFound?.length ?? 0) > 0 && <p className="text-[13px] text-muted">Settori e parole chiave: {match.keywordsFound!.join(", ")}</p>}
+          {match.notes.length > 0 && <p className="text-[13px] text-amber">{match.notes.join(" ∙ ")}</p>}
+          <p className="mono text-faint">Stima dal CV senza AI: {match.score}%</p>
+        </>
+      )}
+    </section>
+  );
+}
+
+function Row({ label, value, pct, color, children }: { label: string; value: string; pct: number; color: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-[13px] font-medium text-slate-300">{label}</span>
+        <span className="font-mono text-[13px] tabular-nums" style={{ color }}>{value}</span>
+      </div>
+      <Meter pct={pct} color={color} />
+      <p className="text-[13px] leading-relaxed text-muted">{children}</p>
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Icon, RadarMark } from "@/components/Icon";
-import { ErrorBox, PageHeader, Progress, StationLine } from "@/components/ui";
+import { CountUp, ErrorBox, PageHeader, Progress } from "@/components/ui";
 import { api } from "@/lib/client";
 import { searchQueries } from "@/lib/cv/signals";
 import { runQueue } from "@/lib/queue";
@@ -169,7 +169,7 @@ export default function SearchPage() {
               <dd className="mt-1.5 flex flex-wrap gap-1.5">
                 {queries?.length ? (
                   queries.map((r) => (
-                    <span key={r} className="rounded-md bg-sky/15 px-2 py-0.5 text-[13px] font-semibold text-[#8dbcff]">{r}</span>
+                    <span key={r} className="chip border-ink text-[13px] text-ink">{r}</span>
                   ))
                 ) : queries ? (
                   <Link href="/profilo" className="text-signal underline">
@@ -255,10 +255,10 @@ export default function SearchPage() {
                 aria-checked={on}
                 disabled={!settings || !aiKey}
                 onClick={() => setAutoEval(v)}
-                className={`flex w-full items-start gap-3 rounded-[10px] border p-3 text-left transition-colors duration-150 disabled:opacity-50 ${on ? "border-signal bg-signal/10" : "border-line-strong hover:border-faint"}`}
+                className={`flex w-full items-start gap-3 rounded-xl border p-3.5 text-left transition-colors duration-150 disabled:opacity-50 ${on ? "border-ink bg-rail" : "border-line-strong hover:border-hover"}`}
               >
-                <span className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border-2 ${on ? "border-signal" : "border-slate-600"}`}>
-                  {on && <span className="size-2.5 rounded-full bg-signal" />}
+                <span className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border-2 ${on ? "border-ink" : "border-slate-600"}`}>
+                  {on && <span className="size-2.5 rounded-full bg-ink" />}
                 </span>
                 <span>
                   <span className="block text-[15px] font-medium">{title}</span>
@@ -271,17 +271,12 @@ export default function SearchPage() {
       </section>
 
       <section className="space-y-3">
-        <StationLine
-          stops={["Fonti", "Filtri", "Punteggio", "Offerte"]}
-          at={running ? (progress?.label === "Valutazione AI" ? 2 : progress && progress.done === progress.total ? 1 : 0) : summary ? 3 : -1}
-          color="var(--color-signal)"
-        />
-        <ol className="space-y-1.5 text-sm text-muted">
-          <li>Legge le offerte da {taskCount ?? "tutte le"} fonti, cercando con le parole del tuo CV.</li>
-          <li>Scarta duplicati, annunci vecchi, sospetti, non idonei per paese o lingua.</li>
-          <li>Dà il punteggio come hai scelto sopra; le nuove offerte le trovi in Offerte, sotto &ldquo;Da vedere&rdquo;.</li>
+        <ol className="space-y-2 text-[15px] text-slate-300">
+          <li className="flex gap-3"><Dot />Legge le offerte da {taskCount ?? "tutte le"} fonti, cercando con le parole del tuo CV.</li>
+          <li className="flex gap-3"><Dot />Scarta duplicati, annunci vecchi, sospetti, non idonei per paese o lingua.</li>
+          <li className="flex gap-3"><Dot />Dà il punteggio come hai scelto sopra; le nuove offerte le trovi in Offerte, sotto &ldquo;Da vedere&rdquo;.</li>
         </ol>
-        <button className="btn-primary min-h-13 w-full text-base" disabled={running} onClick={search}>
+        <button className="btn-primary min-h-12 w-full text-[15px]" disabled={running} onClick={search}>
           {running ? <RadarMark className="size-6" scanning /> : <Icon name="search" className="size-5" strokeWidth={2.2} />}
           {running ? "Ricerca in corso…" : "Avvia la ricerca"}
         </button>
@@ -291,10 +286,10 @@ export default function SearchPage() {
       </section>
 
       {summary && (
-        <section className="card space-y-3 border-signal/30">
+        <section className="space-y-3 rounded-2xl bg-cream p-5">
           <h2 className="text-lg font-semibold">Risultato</h2>
           <p className="text-sm">
-            <span className="text-3xl font-extrabold text-signal tabular-nums">{summary.inserted}</span>{" "}
+            <CountUp value={summary.inserted} className="text-4xl font-semibold tracking-[-0.03em] text-signal tabular-nums" />{" "}
             <span className="text-ink">nuove offerte</span>
             <span className="block text-muted">su {summary.fetched} annunci letti, {totalRejected} scartati</span>
           </p>
@@ -350,6 +345,10 @@ export default function SearchPage() {
       <ManualJob />
     </div>
   );
+}
+
+function Dot() {
+  return <span className="mt-2 size-1.5 shrink-0 rounded-full bg-signal" aria-hidden="true" />;
 }
 
 function Companies() {
